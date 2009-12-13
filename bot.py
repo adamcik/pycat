@@ -47,9 +47,6 @@ class Bot(asynchat.async_chat):
 
         self.handlers[command].append(handler)
 
-    def irc_pong(self, prefix, command, args):
-        self.write('PONG', args[0])
-
     def handle_command(self, prefix, command, args):
         for handler in self.handlers.get(command, []):
             handler(prefix, command, args)
@@ -58,6 +55,9 @@ class Bot(asynchat.async_chat):
         self.logger.info('Connected to server')
 
         self.handle_command(self.server, 'CONNECT', '')
+
+    def irc_pong(self, prefix, command, args):
+        self.write('PONG', args[0])
 
     def irc_register(self, prefix, command, args):
         self.write('NICK', self.config['nick'])
