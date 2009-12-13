@@ -34,6 +34,7 @@ class Bot(asynchat.async_chat):
 
         self.add('PING', self.irc_pong)
         self.add('CONNECT', self.irc_register)
+        self.add('PRIVMSG', self.irc_message)
 
     def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,6 +66,13 @@ class Bot(asynchat.async_chat):
                            self.config['hostname'],
                            self.config['servername'],
                            self.config['realname'])
+
+    def irc_message(self, prefix, command, args):
+        user = prefix.split('!')[0]
+        message = args[-1]
+
+        self.logger.info('%s: %s', user, message)
+        self.irc_command('PRIVMSG', user, message)
 
     def parse_line(self, line):
         prefix = ''
