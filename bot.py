@@ -102,6 +102,7 @@ class Bot(asynchat.async_chat):
 
     def irc_command(self, *args):
         line = ' '.join(args[:-1]) + ' :' + args[-1]
+        line = line.encode('utf-8')
 
         self.logger.debug('Sending: %s', line)
 
