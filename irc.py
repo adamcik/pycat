@@ -1,13 +1,7 @@
-#!/usr/bin/python
-
 import asynchat
-import asyncore
 import logging
 import re
 import socket
-import sys
-
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
 class Bot(asynchat.async_chat):
     config = {
@@ -19,7 +13,7 @@ class Bot(asynchat.async_chat):
         'channel': '#adamcik-test',
     }
 
-    logger = logging.getLogger('bot')
+    logger = logging.getLogger('irc')
 
     def __init__(self, server, port=6667):
         asynchat.async_chat.__init__(self)
@@ -121,12 +115,3 @@ class Bot(asynchat.async_chat):
         self.logger.debug('Sending: %s', line)
 
         self.push(line + self.get_terminator())
-
-bot = Bot('localhost')
-
-try:
-    bot.run()
-    asyncore.loop()
-except KeyboardInterrupt:
-    bot.irc_command('QUIT', 'Bye :)')
-    sys.exit(0)
