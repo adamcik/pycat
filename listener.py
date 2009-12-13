@@ -2,7 +2,7 @@ import asynchat
 import asyncore
 import socket
 
-class Handler(asynchat.async_chat):
+class Reciver(asynchat.async_chat):
     def __init__(self, server, (conn, addr)):
         asynchat.async_chat.__init__(self, conn)
 
@@ -32,7 +32,7 @@ class Listener(asyncore.dispatcher):
         self.listen(5)
 
     def handle_accept(self):
-        Handler(self, self.accept())
+        Reciver(self, self.accept())
 
     def add(self, handler):
         self.handlers.append(handler)
