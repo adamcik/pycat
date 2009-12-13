@@ -29,11 +29,13 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
+        self.current_nick = self.config['nick']
 
         self.set_terminator("\r\n")
 
         self.add('PING', self.irc_pong)
         self.add('CONNECT', self.irc_register)
+        self.add('433', self.irc_nick_collision)
         self.add('PRIVMSG', self.irc_message)
 
     def run(self):
@@ -65,11 +67,15 @@ class Bot(asynchat.async_chat):
                            self.config['servername'],
                            self.config['realname'])
 
+    def irc_nick_collision(self, prefix, command, args):
+        self.current_nick = args[1] + '_'
+        self.irc_command('NICK', self.current_nick)
+
     def irc_message(self, prefix, command, args):
         user = prefix.split('!')[0]
         target, message = args
 
-        if target == self.config['nick']:
+        if target == self.current_nick:
             self.irc_command('PRIVMSG', user, message)
         else:
             self.irc_command('PRIVMSG', target, message)
