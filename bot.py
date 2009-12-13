@@ -16,11 +16,16 @@ listener = Listener()
 
 def parse(line):
     if line.startswith('@'):
-        target, line = line[1:].split(' ', 1)
+        target, message = line[1:].split(' ', 1)
     else:
-        target = bot.config['channel']
+        target = channel
+        message =  line
 
-    bot.irc_command('PRIVMSG', target, line)
+    if line.startswith('@') and target not in nicks:
+        target = channel
+        message = line
+
+    bot.irc_command('PRIVMSG', target, message)
 
 def update_nicks(prefix, command, args):
     if command == 'JOIN':
