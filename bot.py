@@ -2,8 +2,11 @@
 
 import asynchat
 import asyncore
+import logging
 import re
 import socket
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
 class Bot(asynchat.async_chat):
     config = {
@@ -14,6 +17,8 @@ class Bot(asynchat.async_chat):
         'realname': 'adamcik',
         'channel': '#adamcik-test',
     }
+
+    logger = logging.getLogger()
 
     def __init__(self, server, port=6667):
         asynchat.async_chat.__init__(self)
@@ -47,6 +52,8 @@ class Bot(asynchat.async_chat):
             handler(prefix, command, args)
 
     def handle_connect(self):
+        self.logger.info('Connected to server')
+
         self.write('NICK', self.config['nick'])
         self.write('USER', '%(username)s %(hostname)s %(servername)s :%(realname)s' % self.config)
         self.write('JOIN', self.config['channel'])
@@ -74,12 +81,18 @@ class Bot(asynchat.async_chat):
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
 
+        self.logger.debug('Recieved: %s', line)
+
         prefix, command, args = self.parse_line(line)
 
         self.handle_command(prefix, command, args)
 
     def write(self, *args):
-        self.push(' '.join(args) + '\r\n')
+        line = ' '.join(args)
+
+        self.logger.debug('Sending: %s', line)
+
+        self.push(line + '\r\n')
 
     replies = {
         '200': 'RPL_TRACELINK',
