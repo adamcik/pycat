@@ -106,7 +106,7 @@ class Bot(asynchat.async_chat):
 
         self.logger.debug('Sending: %s', line)
 
-        self.push(line + '\r\n')
+        self.push(line + self.get_terminator())
 
 b = Bot('localhost')
 
