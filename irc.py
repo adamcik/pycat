@@ -5,12 +5,11 @@ import socket
 
 class Bot(asynchat.async_chat):
     config = {
-        'nick': 'adamcik-bot',
-        'username': 'adamcik',
+        'nick': 'pycat',
+        'username': 'pycat',
         'hostname': socket.getfqdn(),
         'servername': socket.getfqdn(),
-        'realname': 'adamcik',
-        'channel': '#adamcik-test',
+        'realname': 'pycat',
     }
 
     logger = logging.getLogger('irc')
