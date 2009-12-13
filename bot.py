@@ -29,6 +29,7 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
+
         self.set_terminator("\r\n")
 
         self.add('PING', self.ping_handler)
