@@ -101,7 +101,7 @@ class Bot(asynchat.async_chat):
 
         self.push(line + '\r\n')
 
-b = Bot('irc.ifi.uio.no')
+b = Bot('localhost')
 
 try:
     b.run()
