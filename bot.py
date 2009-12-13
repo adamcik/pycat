@@ -33,6 +33,7 @@ class Bot(asynchat.async_chat):
         self.set_terminator("\r\n")
 
         self.add('PING', self.irc_pong)
+        self.add('CONNECT', self.irc_register)
 
     def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,9 +57,12 @@ class Bot(asynchat.async_chat):
     def handle_connect(self):
         self.logger.info('Connected to server')
 
+        self.handle_command(self.server, 'CONNECT', '')
+
+    def irc_register(self, prefix, command, args):
         self.write('NICK', self.config['nick'])
         self.write('USER', '%(username)s %(hostname)s %(servername)s :%(realname)s' % self.config)
-        self.write('JOIN', self.config['channel'])
+
 
     def parse_line(self, line):
         prefix = ''
