@@ -82,6 +82,11 @@ class Bot(asynchat.async_chat):
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
 
+        try:
+            line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            line = line.decode('iso-8859-1')
+
         self.logger.debug('Recieved: %s', line)
 
         prefix, command, args = self.parse_line(line)
