@@ -102,7 +102,7 @@ class Bot(asynchat.async_chat):
         self.handle_command(prefix, command, args)
 
     def write(self, *args):
-        line = ' '.join(args)
+        line = ' '.join(args[:-1]) + ' :' + args[-1]
 
         self.logger.debug('Sending: %s', line)
 
