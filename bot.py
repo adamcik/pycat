@@ -19,7 +19,7 @@ class Bot(asynchat.async_chat):
         'channel': '#adamcik-test',
     }
 
-    logger = logging.getLogger()
+    logger = logging.getLogger('bot')
 
     def __init__(self, server, port=6667):
         asynchat.async_chat.__init__(self)
