@@ -113,5 +113,5 @@ b = Bot('localhost')
 try:
     b.run()
 except KeyboardInterrupt:
-    b.write('QUIT', 'Bye :)')
+    b.irc_command('QUIT', 'Bye :)')
     sys.exit(0)
