@@ -40,8 +40,6 @@ class Bot(asynchat.async_chat):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((self.server, self.port))
 
-        asyncore.loop()
-
     def add(self, command, handler):
         if command not in self.handlers:
             self.handlers[command] = []
@@ -118,10 +116,11 @@ class Bot(asynchat.async_chat):
 
         self.push(line + self.get_terminator())
 
-b = Bot('localhost')
+bot = Bot('localhost')
 
 try:
-    b.run()
+    bot.run()
+    asyncore.loop()
 except KeyboardInterrupt:
-    b.irc_command('QUIT', 'Bye :)')
+    bot.irc_command('QUIT', 'Bye :)')
     sys.exit(0)
