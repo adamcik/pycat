@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import asynchat
 import asyncore
 import re
