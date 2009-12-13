@@ -37,7 +37,6 @@ class Bot(asynchat.async_chat):
         self.add('QUIT', self.irc_nicks_in_channel)
         self.add('353', self.irc_nicks_in_channel)
 
-    def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((self.server, self.port))
 

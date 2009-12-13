@@ -35,7 +35,6 @@ listener.add(parse)
 bot.add('CONNECT', join)
 
 try:
-    bot.run()
     asyncore.loop()
 except KeyboardInterrupt:
     bot.irc_command('QUIT', 'Bye :)')
