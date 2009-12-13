@@ -9,6 +9,7 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
+channel = '#adamcik-test'
 nicks= set()
 bot = Bot('localhost')
 listener = Listener()
@@ -30,8 +31,12 @@ def update_nicks(prefix, command, args):
         for nick in args[-1].split():
             nicks.add(nick)
 
+def join(prefix, command, args):
+    bot.irc_command('JOIN', channel)
+
 listener.add(parse)
 
+bot.add('CONNECT', join)
 bot.add('JOIN', update_nicks)
 bot.add('PART', update_nicks)
 bot.add('QUIT', update_nicks)
