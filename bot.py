@@ -25,6 +25,8 @@ class Bot(asynchat.async_chat):
         self.handlers = {}
         self.set_terminator("\r\n")
 
+        self.add('PING', self.ping_handler)
+
     def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((self.server, self.port))
@@ -36,6 +38,9 @@ class Bot(asynchat.async_chat):
             self.handlers[command] = []
 
         self.handlers[command].append(handler)
+
+    def ping_handler(self, prefix, command, args):
+        self.write('PONG', args[0])
 
     def handle_connect(self):
         self.write('NICK', self.config['nick'])
