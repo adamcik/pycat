@@ -66,7 +66,6 @@ class Bot(asynchat.async_chat):
                            self.config['servername'],
                            self.config['realname'])
 
-
     def parse_line(self, line):
         prefix = ''
 
