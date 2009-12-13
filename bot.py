@@ -69,10 +69,12 @@ class Bot(asynchat.async_chat):
 
     def irc_message(self, prefix, command, args):
         user = prefix.split('!')[0]
-        message = args[-1]
+        target, message = args
 
-        self.logger.info('%s: %s', user, message)
-        self.irc_command('PRIVMSG', user, message)
+        if target == self.config['nick']:
+            self.irc_command('PRIVMSG', user, message)
+        else:
+            self.irc_command('PRIVMSG', target, message)
 
     def parse_line(self, line):
         prefix = ''
