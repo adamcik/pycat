@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import asynchat
 import asyncore
 import socket
@@ -16,7 +14,6 @@ class Handler(asynchat.async_chat):
         self.buffer += data
 
     def found_terminator(self):
-        print self.buffer
         self.buffer = ''
 
 class Listener(asyncore.dispatcher):
@@ -31,6 +28,3 @@ class Listener(asyncore.dispatcher):
 
     def handle_accept(self):
         Handler(self, self.accept())
-
-Listener()
-asyncore.loop()
