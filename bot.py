@@ -1,5 +1,6 @@
 import asynchat
 import asyncore
+import re
 import socket
 
 class Bot(asynchat.async_chat):
@@ -43,14 +44,14 @@ class Bot(asynchat.async_chat):
         prefix = ''
 
         if line.startswith(':'):
-            prefix, line = line[1:].split(' ', 1)
+            prefix, line = re.split(' +', line[1:],  1)
 
         if ' :' in line:
-            line, trailing = line.split(' :', 1)
-            args = line.split(' ')
+            line, trailing = re.split(' +:', line, 1)
+            args = re.split(' +', line)
             args.append(trailing)
         else:
-            args = line.split(' ')
+            args = re.split(' +', line)
 
         command = args.pop(0)
 
