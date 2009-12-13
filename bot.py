@@ -57,11 +57,11 @@ class Bot(asynchat.async_chat):
         self.handle_command(self.server, 'CONNECT', '')
 
     def irc_pong(self, prefix, command, args):
-        self.write('PONG', args[0])
+        self.irc_command('PONG', args[0])
 
     def irc_register(self, prefix, command, args):
-        self.write('NICK', self.config['nick'])
-        self.write('USER', self.config['username'],
+        self.irc_command('NICK', self.config['nick'])
+        self.irc_command('USER', self.config['username'],
                            self.config['hostname'],
                            self.config['servername'],
                            self.config['realname'])
@@ -101,7 +101,7 @@ class Bot(asynchat.async_chat):
 
         self.handle_command(prefix, command, args)
 
-    def write(self, *args):
+    def irc_command(self, *args):
         line = ' '.join(args[:-1]) + ' :' + args[-1]
 
         self.logger.debug('Sending: %s', line)
