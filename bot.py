@@ -61,7 +61,10 @@ class Bot(asynchat.async_chat):
 
     def irc_register(self, prefix, command, args):
         self.write('NICK', self.config['nick'])
-        self.write('USER', '%(username)s %(hostname)s %(servername)s :%(realname)s' % self.config)
+        self.write('USER', self.config['username'],
+                           self.config['hostname'],
+                           self.config['servername'],
+                           self.config['realname'])
 
 
     def parse_line(self, line):
