@@ -5,6 +5,7 @@ import asyncore
 import logging
 import re
 import socket
+import sys
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
@@ -215,6 +216,10 @@ class Bot(asynchat.async_chat):
         '502': 'ERR_USERSDONTMATCH',
     }
 
+b = Bot('irc.ifi.uio.no')
 
-#Bot('localhost').run()
-Bot('irc.ifi.uio.no').run()
+try:
+    b.run()
+except KeyboardInterrupt:
+    b.write('QUIT', 'Bye :)')
+    sys.exit(0)
