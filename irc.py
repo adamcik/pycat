@@ -22,6 +22,7 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
+        self.channels = {}
         self.current_nick = self.config['nick']
 
         self.set_terminator("\r\n")
@@ -30,6 +31,11 @@ class Bot(asynchat.async_chat):
         self.add('CONNECT', self.irc_register)
         self.add('433', self.irc_nick_collision)
         self.add('PRIVMSG', self.irc_message)
+
+        self.add('JOIN', self.irc_nicks_in_channel)
+        self.add('PART', self.irc_nicks_in_channel)
+        self.add('QUIT', self.irc_nicks_in_channel)
+        self.add('353', self.irc_nicks_in_channel)
 
     def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,6 +69,26 @@ class Bot(asynchat.async_chat):
     def irc_nick_collision(self, prefix, command, args):
         self.current_nick = args[1] + '_'
         self.irc_command('NICK', self.current_nick)
+
+    def irc_nicks_in_channel(self, prefix, command, args):
+        if command in ['QUIT', 'PART']:
+            channel = args[0]
+            nick = prefix.split('!')[0]
+
+            self.channels[channel].remove(nick)
+        else:
+            if command == 'JOIN':
+                channel = args[0]
+                nicks = [prefix.split('!')[0]]
+            else:
+                channel = args[-2]
+                nicks = args[-1].split()
+
+            if channel not in self.channels:
+                self.channels[channel] = set()
+
+            for nick in nicks:
+                self.channels[channel].add(nick)
 
     def irc_message(self, prefix, command, args):
         user = prefix.split('!')[0]
