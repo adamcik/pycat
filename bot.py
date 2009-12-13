@@ -32,7 +32,7 @@ class Bot(asynchat.async_chat):
 
         self.set_terminator("\r\n")
 
-        self.add('PING', self.ping_handler)
+        self.add('PING', self.irc_pong)
 
     def run(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,7 +46,7 @@ class Bot(asynchat.async_chat):
 
         self.handlers[command].append(handler)
 
-    def ping_handler(self, prefix, command, args):
+    def irc_pong(self, prefix, command, args):
         self.write('PONG', args[0])
 
     def handle_command(self, prefix, command, args):
