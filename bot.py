@@ -51,12 +51,7 @@ class Bot(asynchat.async_chat):
         self.write('USER', '%(username)s %(hostname)s %(servername)s :%(realname)s' % self.config)
         self.write('JOIN', self.config['channel'])
 
-    def collect_incoming_data(self, data):
-        self.buffer += data
-
-    def found_terminator(self):
-        line, self.buffer = self.buffer, ''
-
+    def parse_line(self, line):
         prefix = ''
 
         if line.startswith(':'):
@@ -70,6 +65,16 @@ class Bot(asynchat.async_chat):
             args = re.split(' +', line)
 
         command = args.pop(0)
+
+        return prefix, command, args
+
+    def collect_incoming_data(self, data):
+        self.buffer += data
+
+    def found_terminator(self):
+        line, self.buffer = self.buffer, ''
+
+        prefix, command, args = self.parse_line(line)
 
         self.handle_command(prefix, command, args)
 
