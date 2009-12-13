@@ -22,6 +22,7 @@ class Bot(asynchat.async_chat):
         self.port = port
 
         self.buffer = ''
+        self.handlers = {}
         self.set_terminator("\r\n")
 
     def run(self):
@@ -29,6 +30,12 @@ class Bot(asynchat.async_chat):
         self.connect((self.server, self.port))
 
         asyncore.loop()
+
+    def add(self, command, handler):
+        if command not in self.handlers:
+            self.handlers[command] = []
+
+        self.handlers[command].append(handler)
 
     def handle_connect(self):
         self.write('NICK', self.config['nick'])
@@ -40,8 +47,6 @@ class Bot(asynchat.async_chat):
 
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
-
-        print line
 
         prefix = ''
 
@@ -57,7 +62,8 @@ class Bot(asynchat.async_chat):
 
         command = args.pop(0)
 
-        print [prefix, self.replies.get(command, command), args]
+        for handler in self.handlers.get(command, []):
+            handler(prefix, command, args)
 
     def write(self, *args):
         self.push(' '.join(args) + '\r\n')
