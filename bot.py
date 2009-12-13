@@ -42,6 +42,10 @@ class Bot(asynchat.async_chat):
     def ping_handler(self, prefix, command, args):
         self.write('PONG', args[0])
 
+    def handle_command(self, prefix, command, args):
+        for handler in self.handlers.get(command, []):
+            handler(prefix, command, args)
+
     def handle_connect(self):
         self.write('NICK', self.config['nick'])
         self.write('USER', '%(username)s %(hostname)s %(servername)s :%(realname)s' % self.config)
@@ -67,8 +71,7 @@ class Bot(asynchat.async_chat):
 
         command = args.pop(0)
 
-        for handler in self.handlers.get(command, []):
-            handler(prefix, command, args)
+        self.handle_command(prefix, command, args)
 
     def write(self, *args):
         self.push(' '.join(args) + '\r\n')
