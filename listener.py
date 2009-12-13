@@ -14,12 +14,17 @@ class Handler(asynchat.async_chat):
         self.buffer += data
 
     def found_terminator(self):
-        self.buffer = ''
+        line, self.buffer = self.buffer, ''
+
+        for handler in self.server.handlers:
+            handler(line)
 
 class Listener(asyncore.dispatcher):
     def __init__(self, port=12345):
         asyncore.dispatcher.__init__(self)
+
         self.port = port
+        self.handlers = []
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
@@ -28,3 +33,6 @@ class Listener(asyncore.dispatcher):
 
     def handle_accept(self):
         Handler(self, self.accept())
+
+    def add(self, handler):
+        self.handlers.append(handler)
