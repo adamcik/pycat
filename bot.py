@@ -21,17 +21,14 @@ listener = Listener()
 def listen_parser(line):
     if line.startswith('@'): # FIXME: ValueError on split
         target, message = line[1:].split(' ', 1)
-    else: # FIXME allow for multiple channels
-        target = channel
-        message =  line
-
-    # FIXME avoid sending msg on fail
-    if line.startswith('@') and target not in nicks:
-        target = channel
+    elif line.startswith('#') or line.startswith('&'):
+        target, message = line.split(' ', 1)
+    else:
+        target = channels[0]
         message = line
 
-    # FIXME parse commands from users?
-    bot.irc.privmsg(target, message)
+    if bot.known_target(target):
+        bot.irc.privmsg(target, message)
 
 def msg_parser(prefix, command, args):
     user = prefix.split('!')[0]
