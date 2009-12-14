@@ -19,11 +19,9 @@ class IRC(object):
 
     def _command(self, *args):
         line = ' '.join(args[:-1]) + ' :' + args[-1]
-        line = line.encode('utf-8')
-
         logger.debug('Sending: %s', line)
 
-        self.bot.push(line + self.bot.get_terminator())
+        self.bot.push(line.encode('utf-8') + self.bot.get_terminator())
 
 class Bot(asynchat.async_chat):
     # FIXME take in external config
