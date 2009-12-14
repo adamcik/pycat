@@ -1,6 +1,9 @@
 import asynchat
 import asyncore
+import logging
 import socket
+
+logger = logging.getLogger('listener')
 
 class Reciver(asynchat.async_chat):
     def __init__(self, server, (conn, addr)):
@@ -20,6 +23,8 @@ class Reciver(asynchat.async_chat):
             line = line.decode('utf-8')
         except UnicodeDecodeError:
             line = line.decode('iso-8859-1')
+
+        logger.debug('Listener: %s', line)
 
         for handler in self.server.handlers:
             handler(line)
