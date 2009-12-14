@@ -64,10 +64,15 @@ def join(prefix, command, args):
     for channel in channels:
         bot.irc.join(channel)
 
+def invite_rejoin(prefix, command, args):
+    if args[-1] in channels:
+        bot.irc.join(args[-1])
+
 listener.add(listen_parser)
 
 # FIXME queue events to run after register?
 bot.add('CONNECT', join)
+bot.add('INVITE', invite_rejoin)
 bot.add('PRIVMSG', msg_parser)
 
 try:
