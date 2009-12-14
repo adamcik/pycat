@@ -19,10 +19,10 @@ nicks= set()
 bot = Bot('localhost')
 listener = Listener()
 
-def parse(line):
+def listen_parser(line):
     if line.startswith('@'): # FIXME: ValueError on split
         target, message = line[1:].split(' ', 1)
-    else:
+    else: # FIXME allow for multiple channels
         target = channel
         message =  line
 
@@ -37,7 +37,7 @@ def parse(line):
 def join(prefix, command, args):
     bot.irc.join(channel)
 
-listener.add(parse)
+listener.add(listen_parser)
 
 # FIXME queue events to run after register?
 bot.add('CONNECT', join)
