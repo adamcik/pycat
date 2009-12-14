@@ -19,11 +19,19 @@ bot = Bot('localhost')
 listener = Listener()
 
 def listen_parser(line):
+    if not line.strip():
+        return
+
     if line[0] in '@#&':
-        targets, message = line.split(' ', 1)
-        targets = targets.split(',')
+        parts  = line.split(' ', 1)
+        targets = parts[0].split(',')
+        message = ' '.join(parts[1:])
     else:
         targets = [channels[0]]
+        message = line
+
+    if not message.strip():
+        return
 
     for target in targets:
         if target.startswith('@'):
