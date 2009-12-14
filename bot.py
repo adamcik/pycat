@@ -1,8 +1,9 @@
 #! /usr/bin/python
 
-import sys
 import asyncore
 import logging
+import subprocess
+import sys
 
 from irc import Bot
 from listener import Listener
