@@ -87,6 +87,7 @@ class Bot(asynchat.async_chat):
 
     def irc_nicks_in_channel(self, prefix, command, args):
         # FIXME valueerrors...
+        # FIXME clear on part
 
         if command in ['QUIT', 'PART']:
             channel = args[0]

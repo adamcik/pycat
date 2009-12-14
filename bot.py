@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/python
 
 import sys
 import asyncore
@@ -9,6 +9,7 @@ from listener import Listener
 
 # FIXME figure out async subprocess
 # FIXME use optparse and/or configreader
+# FIXME reconncet on disconnect
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
