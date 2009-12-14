@@ -30,7 +30,7 @@ def listen_parser(line):
     if bot.known_target(target):
         bot.irc.privmsg(target, message)
 
-def msg_parser(prefix, command, args):
+def privmsg_parser(prefix, command, args):
     user = prefix.split('!')[0]
     target, message = args
 
@@ -60,7 +60,7 @@ def msg_parser(prefix, command, args):
             if line.strip():
                 bot.irc.privmsg(target, line)
 
-def join(prefix, command, args):
+def connect_join(prefix, command, args):
     for channel in channels:
         bot.irc.join(channel)
 
@@ -70,10 +70,9 @@ def invite_rejoin(prefix, command, args):
 
 listener.add(listen_parser)
 
-# FIXME queue events to run after register?
-bot.add('CONNECT', join)
+bot.add('CONNECT', connect_join)
 bot.add('INVITE', invite_rejoin)
-bot.add('PRIVMSG', msg_parser)
+bot.add('PRIVMSG', privmsg_parser)
 
 try:
     asyncore.loop()
