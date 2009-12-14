@@ -25,10 +25,10 @@ def parse(line):
         target = channel
         message = line
 
-    bot.irc_command('PRIVMSG', target, message)
+    bot.irc.privmsg(target, message)
 
 def join(prefix, command, args):
-    bot.irc_command('JOIN', channel)
+    bot.irc.join(channel)
 
 listener.add(parse)
 
@@ -37,5 +37,5 @@ bot.add('CONNECT', join)
 try:
     asyncore.loop()
 except KeyboardInterrupt:
-    bot.irc_command('QUIT', 'Bye :)')
+    bot.irc.quit('Bye :)')
     sys.exit(0)
