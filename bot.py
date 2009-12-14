@@ -14,7 +14,7 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
-channel = '#adamcik-test'
+channels = ['#adamcik-test']
 bot = Bot('localhost')
 listener = Listener()
 
@@ -64,7 +64,8 @@ def msg_parser(prefix, command, args):
                 bot.irc.privmsg(target, line)
 
 def join(prefix, command, args):
-    bot.irc.join(channel)
+    for channel in channels:
+        bot.irc.join(channel)
 
 listener.add(listen_parser)
 
