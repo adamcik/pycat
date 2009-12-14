@@ -51,7 +51,6 @@ class Bot(asynchat.async_chat):
         self.add('PING', self.irc_pong)
         self.add('CONNECT', self.irc_register)
         self.add('433', self.irc_nick_collision)
-        self.add('PRIVMSG', self.irc_message)
 
         self.add('JOIN', self.irc_nicks_in_channel)
         self.add('PART', self.irc_nicks_in_channel)
@@ -113,16 +112,6 @@ class Bot(asynchat.async_chat):
 
             for nick in nicks:
                 self.channels[channel].add(nick)
-
-    # FIXME don't auto reply messages
-    def irc_message(self, prefix, command, args):
-        user = prefix.split('!')[0]
-        target, message = args
-
-        if target == self.current_nick:
-            self.irc.privmsg(user, message)
-        else:
-            self.irc.privmsg(target, message)
 
     # FIXME move to IRCMessage class?
     def parse_line(self, line):
