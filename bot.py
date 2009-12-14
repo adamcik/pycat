@@ -19,16 +19,18 @@ bot = Bot('localhost')
 listener = Listener()
 
 def listen_parser(line):
-    if line.startswith('@'): # FIXME: ValueError on split
-        target, message = line[1:].split(' ', 1)
-    elif line.startswith('#') or line.startswith('&'):
-        target, message = line.split(' ', 1)
+    if line[0] in '@#&':
+        targets, message = line.split(' ', 1)
+        targets = targets.split(',')
     else:
-        target = channels[0]
-        message = line
+        targets = [channels[0]]
 
-    if bot.known_target(target):
-        bot.irc.privmsg(target, message)
+    for target in targets:
+        if target.startswith('@'):
+            target = target[1:]
+
+        if bot.known_target(target):
+            bot.irc.privmsg(target, message)
 
 def privmsg_parser(prefix, command, args):
     user = prefix.split('!')[0]
