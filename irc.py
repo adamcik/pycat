@@ -9,12 +9,13 @@ class IRC(object):
     def __init__(self, bot):
         self.bot = bot
 
-    # FIXME add translation table /msg -> /privmsg etc.
-
     def __getattr__(self, key):
+        key = key.upper()
+
         def wrapper(*args):
-            self._command(key.upper(), *args)
-        wrapper.__name__ = key.upper()
+            self._command(key, *args)
+
+        wrapper.__name__ = key
         return wrapper
 
     def _command(self, *args):
