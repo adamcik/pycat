@@ -44,6 +44,12 @@ def privmsg_parser(prefix, command, args):
     user = prefix.split('!')[0]
     target, message = args
 
+    if not message[0] in '!?':
+        if target == bot.current_nick:
+            bot.irc.privmsg(user, "I don't understand what you want.")
+
+        return
+
     p = subprocess.Popen('./test.sh',
         shell=True,
         bufsize=1024,
