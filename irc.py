@@ -76,6 +76,16 @@ class Bot(asynchat.async_chat):
 
         self.handle_command(self.server, 'CONNECT', '')
 
+    def known_target(self, target):
+        if target and target[0] in '#&':
+            return target in self.channels
+
+        for nicks in self.channels.values():
+            if target in nicks:
+                return True
+
+        return False
+
     def irc_pong(self, prefix, command, args):
         self.irc.pong(args[0])
 
