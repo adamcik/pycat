@@ -2,12 +2,16 @@ import asynchat
 import logging
 import re
 import socket
+import time
 
 logger = logging.getLogger('irc')
 
 class IRC(object):
+    max_per_second = 1
+
     def __init__(self, bot):
         self.bot = bot
+        self.last_send = time.time()
 
     def __getattr__(self, key):
         key = key.upper()
@@ -20,9 +24,16 @@ class IRC(object):
 
     def _command(self, *args):
         line = ' '.join(args[:-1]) + ' :' + args[-1]
+
+        sleep = time.time() - self.last_send
+
+        if sleep < self.max_per_second:
+            time.sleep(self.max_per_second - sleep)
+
         logger.debug('Sending: %s', line)
 
         self.bot.push(line.encode('utf-8') + self.bot.get_terminator())
+        self.last_send = time.time()
 
 class Bot(asynchat.async_chat):
     # FIXME take in external config
