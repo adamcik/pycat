@@ -3,6 +3,8 @@ import logging
 import re
 import socket
 
+logger = logging.getLogger('irc')
+
 class IRC(object):
     def __init__(self, bot):
         self.bot = bot
@@ -24,8 +26,6 @@ class Bot(asynchat.async_chat):
         'servername': socket.getfqdn(),
         'realname': 'pycat',
     }
-
-    logger = logging.getLogger('irc')
 
     def __init__(self, server, port=6667):
         asynchat.async_chat.__init__(self)
@@ -67,7 +67,7 @@ class Bot(asynchat.async_chat):
             handler(prefix, command, args)
 
     def handle_connect(self):
-        self.logger.info('Connected to server')
+        logger.info('Connected to server')
 
         self.handle_command(self.server, 'CONNECT', '')
 
@@ -147,7 +147,7 @@ class Bot(asynchat.async_chat):
         except UnicodeDecodeError:
             line = line.decode('iso-8859-1')
 
-        self.logger.debug('Recieved: %s', line)
+        logger.debug('Recieved: %s', line)
 
         prefix, command, args = self.parse_line(line)
 
