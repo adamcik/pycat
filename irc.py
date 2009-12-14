@@ -13,9 +13,17 @@ class IRC(object):
 
     def __getattr__(self, key):
         def wrapper(*args):
-            self.bot.irc_command(key.upper(), *args)
+            self._command(key.upper(), *args)
         wrapper.__name__ = key.upper()
         return wrapper
+
+    def _command(self, *args):
+        line = ' '.join(args[:-1]) + ' :' + args[-1]
+        line = line.encode('utf-8')
+
+        logger.debug('Sending: %s', line)
+
+        self.bot.push(line + self.bot.get_terminator())
 
 class Bot(asynchat.async_chat):
     # FIXME take in external config
@@ -72,18 +80,18 @@ class Bot(asynchat.async_chat):
         self.handle_command(self.server, 'CONNECT', '')
 
     def irc_pong(self, prefix, command, args):
-        self.irc_command('PONG', args[0])
+        self.irc.pong(args[0])
 
     def irc_register(self, prefix, command, args):
-        self.irc_command('NICK', self.config['nick'])
-        self.irc_command('USER', self.config['username'],
-                           self.config['hostname'],
-                           self.config['servername'],
-                           self.config['realname'])
+        self.irc.nick(self.config['nick'])
+        self.irc.user(self.config['username'],
+                      self.config['hostname'],
+                      self.config['servername'],
+                      self.config['realname'])
 
     def irc_nick_collision(self, prefix, command, args):
         self.current_nick = args[1] + '_'
-        self.irc_command('NICK', self.current_nick)
+        self.irc.nick(self.current_nick)
 
     def irc_nicks_in_channel(self, prefix, command, args):
         # FIXME valueerrors...
@@ -114,9 +122,9 @@ class Bot(asynchat.async_chat):
         target, message = args
 
         if target == self.current_nick:
-            self.irc_command('PRIVMSG', user, message)
+            self.irc.privmsg(user, message)
         else:
-            self.irc_command('PRIVMSG', target, message)
+            self.irc.privmsg(target, message)
 
     # FIXME move to IRCMessage class?
     def parse_line(self, line):
@@ -152,11 +160,3 @@ class Bot(asynchat.async_chat):
         prefix, command, args = self.parse_line(line)
 
         self.handle_command(prefix, command, args)
-
-    def irc_command(self, *args):
-        line = ' '.join(args[:-1]) + ' :' + args[-1]
-        line = line.encode('utf-8')
-
-        self.logger.debug('Sending: %s', line)
-
-        self.push(line + self.get_terminator())
