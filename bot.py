@@ -14,7 +14,7 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
-channels = ['#adamcik-test']
+channels = ['#adamcik-test', '#foo', '#baz']
 bot = Bot('localhost')
 listener = Listener()
 
@@ -22,16 +22,21 @@ def listen_parser(line):
     if not line.strip():
         return
 
-    if line[0] in '@#&':
+    if line[0] in '@#':
         parts  = line.split(' ', 1)
-        targets = parts[0].split(',')
+        targets = set(parts[0].split(','))
         message = ' '.join(parts[1:])
     else:
-        targets = [channels[0]]
+        targets = set([channels[0]])
         message = line
 
     if not message.strip():
         return
+
+    if '#*' in targets:
+        targets.remove('#*')
+        for target in channels:
+            targets.add(target)
 
     for target in targets:
         if target.startswith('@'):
