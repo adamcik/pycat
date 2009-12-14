@@ -17,7 +17,7 @@ class Reciver(asynchat.async_chat):
         self.buffer += data
 
     def found_terminator(self):
-        line, self.buffer = self.buffer, ''
+        line = self.buffer
 
         try:
             line = line.decode('utf-8')
@@ -28,6 +28,8 @@ class Reciver(asynchat.async_chat):
 
         for handler in self.server.handlers:
             handler(line)
+
+        self.close()
 
 class Listener(asyncore.dispatcher):
     def __init__(self, port=12345):
