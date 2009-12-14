@@ -16,6 +16,11 @@ class Reciver(asynchat.async_chat):
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
 
+        try:
+            line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            line = line.decode('iso-8859-1')
+
         for handler in self.server.handlers:
             handler(line)
 
