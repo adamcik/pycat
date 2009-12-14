@@ -34,5 +34,6 @@ class Listener(asyncore.dispatcher):
     def handle_accept(self):
         Reciver(self, self.accept())
 
+    # FIXME rename and clean api?
     def add(self, handler):
         self.handlers.append(handler)

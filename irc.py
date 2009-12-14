@@ -7,6 +7,8 @@ class IRC(object):
     def __init__(self, bot):
         self.bot = bot
 
+    # FIXME add translation table /msg -> /privmsg etc.
+
     def __getattr__(self, key):
         def wrapper(*args):
             self.bot.irc_command(key.upper(), *args)
@@ -14,6 +16,7 @@ class IRC(object):
         return wrapper
 
 class Bot(asynchat.async_chat):
+    # FIXME take in external config
     config = {
         'nick': 'pycat',
         'username': 'pycat',
@@ -52,6 +55,7 @@ class Bot(asynchat.async_chat):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((self.server, self.port))
 
+    # FIXME rename and fix signature. decorator?
     def add(self, command, handler):
         if command not in self.handlers:
             self.handlers[command] = []
@@ -82,6 +86,8 @@ class Bot(asynchat.async_chat):
         self.irc_command('NICK', self.current_nick)
 
     def irc_nicks_in_channel(self, prefix, command, args):
+        # FIXME valueerrors...
+
         if command in ['QUIT', 'PART']:
             channel = args[0]
             nick = prefix.split('!')[0]
@@ -101,6 +107,7 @@ class Bot(asynchat.async_chat):
             for nick in nicks:
                 self.channels[channel].add(nick)
 
+    # FIXME don't auto reply messages
     def irc_message(self, prefix, command, args):
         user = prefix.split('!')[0]
         target, message = args
@@ -110,6 +117,7 @@ class Bot(asynchat.async_chat):
         else:
             self.irc_command('PRIVMSG', target, message)
 
+    # FIXME move to IRCMessage class?
     def parse_line(self, line):
         prefix = ''
 
