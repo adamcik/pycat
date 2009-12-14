@@ -15,7 +15,6 @@ from listener import Listener
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
 channel = '#adamcik-test'
-nicks= set()
 bot = Bot('localhost')
 listener = Listener()
 
