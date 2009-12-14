@@ -3,6 +3,16 @@ import logging
 import re
 import socket
 
+class IRC(object):
+    def __init__(self, bot):
+        self.bot = bot
+
+    def __getattr__(self, key):
+        def wrapper(*args):
+            self.bot.irc_command(key.upper(), *args)
+        wrapper.__name__ = key.upper()
+        return wrapper
+
 class Bot(asynchat.async_chat):
     config = {
         'nick': 'pycat',
@@ -24,6 +34,8 @@ class Bot(asynchat.async_chat):
         self.handlers = {}
         self.channels = {}
         self.current_nick = self.config['nick']
+
+        self.irc = IRC(self)
 
         self.set_terminator("\r\n")
 
