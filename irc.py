@@ -61,13 +61,17 @@ class Bot(asynchat.async_chat):
         self.set_terminator("\r\n")
 
         self.add('PING', self.irc_pong)
-        self.add('CONNECT', self.irc_register)
         self.add('433', self.irc_nick_collision)
 
         self.add('JOIN', self.irc_nicks_in_channel)
         self.add('PART', self.irc_nicks_in_channel)
         self.add('QUIT', self.irc_nicks_in_channel)
         self.add('353', self.irc_nicks_in_channel)
+
+        self.reconnect()
+
+    def reconnect(self):
+        self.discard_buffers()
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((self.server, self.port))
@@ -86,7 +90,14 @@ class Bot(asynchat.async_chat):
     def handle_connect(self):
         logger.info('Connected to server')
 
-        self.handle_command(self.server, 'CONNECT', '')
+        self.irc.nick(self.config['nick'])
+        self.irc.user(self.config['username'],
+                      self.config['hostname'],
+                      self.config['servername'],
+                      self.config['realname'])
+
+    def handle_close(self):
+        self.reconnect()
 
     def known_target(self, target):
         if target and target[0] in '#&':
@@ -101,12 +112,6 @@ class Bot(asynchat.async_chat):
     def irc_pong(self, prefix, command, args):
         self.irc.pong(args[0])
 
-    def irc_register(self, prefix, command, args):
-        self.irc.nick(self.config['nick'])
-        self.irc.user(self.config['username'],
-                      self.config['hostname'],
-                      self.config['servername'],
-                      self.config['realname'])
 
     def irc_nick_collision(self, prefix, command, args):
         self.current_nick = args[1] + '_'
