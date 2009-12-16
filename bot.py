@@ -32,6 +32,8 @@ def listen_parser(line):
 
     if not message.strip():
         return
+    elif message.startswith('/me '):
+        message = '\001ACTION %s\001' % message[4:]
 
     if '#*' in targets:
         targets.remove('#*')
