@@ -45,6 +45,8 @@ def listen_parser(line):
         if bot.known_target(target):
             if message.startswith('/me '):
                 bot.irc.ctcp_action(target, message[len('/me '):])
+            elif message.startswith('/notice '):
+                bot.irc.notice(target, message[len('/notice '):])
             else:
                 bot.irc.privmsg(target, message)
 
