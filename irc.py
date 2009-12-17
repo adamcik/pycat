@@ -125,15 +125,23 @@ class Bot(asynchat.async_chat):
         # FIXME valueerrors...
         # FIXME clear on part
 
-        if command in ['QUIT', 'PART']:
-            channel = args[0]
-            nick = prefix.split('!')[0]
+        nick = prefix.split('!')[0]
 
-            self.channels[channel].remove(nick)
+        if command == 'PART':
+            channel = args[0]
+
+            if nick == self.current_nick:
+                del self.channels[channel]
+            else:
+                self.channels[channel].remove(nick)
+        elif command == 'QUIT':
+            for nicks in self.channels.values():
+                if nick in nicks:
+                    nicks.remove(nick)
         else:
             if command == 'JOIN':
                 channel = args[0]
-                nicks = [prefix.split('!')[0]]
+                nicks = [nick]
             else:
                 channel = args[-2]
                 nicks = args[-1].split()
