@@ -23,6 +23,10 @@ class IRC(object):
         return wrapper
 
     def _command(self, *args):
+        if args[0].startswith('CTCP_'):
+            ctcp = args[0][len('CTCP_'):]
+            args = ['PRIVMSG', args[1], '\001%s %s\001' % (ctcp, args[2])]
+
         line = ' '.join(args[:-1]) + ' :' + args[-1]
 
         sleep = time.time() - self.last_send
