@@ -93,7 +93,7 @@ def invite_rejoin(prefix, command, args):
 
 listener.add(listen_parser)
 
-bot.add('255', connect_join)
+bot.add('376', connect_join)
 bot.add('INVITE', invite_rejoin)
 bot.add('PRIVMSG', privmsg_parser)
 
