@@ -160,6 +160,11 @@ class Bot(asynchat.async_chat):
 
         command = args.pop(0)
 
+        if command == 'PRIVMSG' and args[1][0] == args[1][-1] == '\001':
+            parts = re.split(' ', args[1][1:-1])
+            command = 'CTCP_' + parts.pop(0)
+            args[1] = ' '.join(parts)
+
         return prefix, command, args
 
     def collect_incoming_data(self, data):
