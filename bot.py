@@ -32,8 +32,6 @@ def listen_parser(line):
 
     if not message.strip():
         return
-    elif message.startswith('/me '):
-        message = '\001ACTION %s\001' % message[4:]
 
     if '#*' in targets:
         targets.remove('#*')
@@ -45,7 +43,10 @@ def listen_parser(line):
             target = target[1:]
 
         if bot.known_target(target):
-            bot.irc.privmsg(target, message)
+            if message.startswith('/me '):
+                bot.irc.ctcp_action(target, message[len('/me '):])
+            else:
+                bot.irc.privmsg(target, message)
 
 def privmsg_parser(prefix, command, args):
     user = prefix.split('!')[0]
