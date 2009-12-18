@@ -6,6 +6,9 @@ import time
 
 logger = logging.getLogger('irc')
 
+# FIXME irc message class that does parsing and building of messages
+# FIXME class should also fix encoding
+
 class IRC(object):
     max_per_second = 1
 
@@ -47,6 +50,7 @@ class Bot(asynchat.async_chat):
         'hostname': socket.getfqdn(),
         'servername': socket.getfqdn(),
         'realname': 'pycat',
+        'channel': '#foo',
     }
 
     def __init__(self, server, port=6667):
@@ -57,7 +61,6 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
-        self.channels = {}
         self.current_nick = self.config['nick']
 
         self.irc = IRC(self)
@@ -65,12 +68,9 @@ class Bot(asynchat.async_chat):
         self.set_terminator("\r\n")
 
         self.add('PING', self.irc_pong)
+        self.add('INVITE', self.irc_invite)
+        self.add('376', self.irc_join)
         self.add('433', self.irc_nick_collision)
-
-        self.add('JOIN', self.irc_nicks_in_channel)
-        self.add('PART', self.irc_nicks_in_channel)
-        self.add('QUIT', self.irc_nicks_in_channel)
-        self.add('353', self.irc_nicks_in_channel)
 
         self.reconnect()
 
@@ -103,54 +103,19 @@ class Bot(asynchat.async_chat):
     def handle_close(self):
         self.reconnect()
 
-    def known_target(self, target):
-        if target and target[0] in '#&':
-            return target in self.channels
-
-        for nicks in self.channels.values():
-            if target in nicks:
-                return True
-
-        return False
-
     def irc_pong(self, prefix, command, args):
         self.irc.pong(args[0])
-
 
     def irc_nick_collision(self, prefix, command, args):
         self.current_nick = args[1] + '_'
         self.irc.nick(self.current_nick)
 
-    def irc_nicks_in_channel(self, prefix, command, args):
-        # FIXME valueerrors...
-        # FIXME clear on part
+    def irc_join(self, prefix, command, args):
+        self.irc.join(self.config['channel'])
 
-        nick = prefix.split('!')[0]
-
-        if command == 'PART':
-            channel = args[0]
-
-            if nick == self.current_nick:
-                del self.channels[channel]
-            else:
-                self.channels[channel].remove(nick)
-        elif command == 'QUIT':
-            for nicks in self.channels.values():
-                if nick in nicks:
-                    nicks.remove(nick)
-        else:
-            if command == 'JOIN':
-                channel = args[0]
-                nicks = [nick]
-            else:
-                channel = args[-2]
-                nicks = args[-1].split()
-
-            if channel not in self.channels:
-                self.channels[channel] = set()
-
-            for nick in nicks:
-                self.channels[channel].add(nick)
+    def irc_invite(prefix, command, args):
+        if args[0] == self.config['channel']:
+            self.irc.join(self.config['channel'])
 
     # FIXME move to IRCMessage class?
     def parse_line(self, line):

@@ -14,7 +14,6 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
-channels = ['#adamcik-test', '#foo', '#baz']
 bot = Bot('localhost')
 listener = Listener()
 
@@ -22,33 +21,12 @@ def listen_parser(line):
     if not line.strip():
         return
 
-    if line[0] in '@#':
-        parts  = line.split(' ', 1)
-        targets = set(parts[0].split(','))
-        message = ' '.join(parts[1:])
+    if message.startswith('/me '):
+        bot.irc.ctcp_action(target, message[len('/me '):])
+    elif message.startswith('/notice '):
+        bot.irc.notice(target, message[len('/notice '):])
     else:
-        targets = set([channels[0]])
-        message = line
-
-    if not message.strip():
-        return
-
-    if '#*' in targets:
-        targets.remove('#*')
-        for target in channels:
-            targets.add(target)
-
-    for target in targets:
-        if target.startswith('@'):
-            target = target[1:]
-
-        if bot.known_target(target):
-            if message.startswith('/me '):
-                bot.irc.ctcp_action(target, message[len('/me '):])
-            elif message.startswith('/notice '):
-                bot.irc.notice(target, message[len('/notice '):])
-            else:
-                bot.irc.privmsg(target, message)
+        bot.irc.privmsg(target, message)
 
 def privmsg_parser(prefix, command, args):
     user = prefix.split('!')[0]
@@ -86,18 +64,12 @@ def privmsg_parser(prefix, command, args):
             if line.strip():
                 bot.irc.privmsg(target, line)
 
-def connect_join(prefix, command, args):
-    for channel in channels:
-        bot.irc.join(channel)
-
-def invite_rejoin(prefix, command, args):
-    if args[-1] in channels:
-        bot.irc.join(args[-1])
+#def invite_rejoin(prefix, command, args):
+#    bot.irc.join(args[-1])
 
 listener.add(listen_parser)
 
-bot.add('376', connect_join)
-bot.add('INVITE', invite_rejoin)
+#bot.add('INVITE', invite_rejoin)
 bot.add('PRIVMSG', privmsg_parser)
 
 try:
