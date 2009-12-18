@@ -87,10 +87,6 @@ class Bot(asynchat.async_chat):
 
         self.handlers[command].append(handler)
 
-    def handle_command(self, prefix, command, args):
-        for handler in self.handlers.get(command, []):
-            handler(prefix, command, args)
-
     def handle_connect(self):
         logger.info('Connected to server')
 
@@ -138,7 +134,21 @@ class Bot(asynchat.async_chat):
             command = 'CTCP_' + parts.pop(0)
             args[1] = ' '.join(parts)
 
-        return prefix, command, args
+        if prefix and '!' in prefix:
+            nick, rest = prefix.split('!', 1)
+            user, host = rest.split('@', 1)
+        elif prefix:
+            nick, user, host = None, None, prefix
+        else:
+            nick, user, host = None, None, None
+
+        return {
+            'nick': nick,
+            'user': user,
+            'host': host,
+            'command': command,
+            'args': args,
+        }
 
     def collect_incoming_data(self, data):
         self.buffer += data
@@ -153,6 +163,7 @@ class Bot(asynchat.async_chat):
 
         logger.debug('Recieved: %s', line)
 
-        prefix, command, args = self.parse_line(line)
+        kwargs = self.parse_line(line)
 
-        self.handle_command(prefix, command, args)
+        for handler in self.handlers.get(kwargs['command'], []):
+            handler(**kwargs)
