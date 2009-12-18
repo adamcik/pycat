@@ -21,12 +21,14 @@ def listen_parser(line):
     if not line.strip():
         return
 
-    if message.startswith('/me '):
-        bot.irc.ctcp_action(target, message[len('/me '):])
-    elif message.startswith('/notice '):
-        bot.irc.notice(target, message[len('/notice '):])
+    target = bot.config['channel']
+
+    if line.startswith('/me '):
+        bot.irc.ctcp_action(target, line[len('/me '):])
+    elif line.startswith('/notice '):
+        bot.irc.notice(target, line[len('/notice '):])
     else:
-        bot.irc.privmsg(target, message)
+        bot.irc.privmsg(target, line)
 
 def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
