@@ -99,17 +99,17 @@ class Bot(asynchat.async_chat):
     def handle_close(self):
         self.reconnect()
 
-    def irc_pong(self, prefix, command, args):
+    def irc_pong(self, nick=None, user=None, host=None, command=None, args=None):
         self.irc.pong(args[0])
 
-    def irc_nick_collision(self, prefix, command, args):
+    def irc_nick_collision(self, nick=None, user=None, host=None, command=None, args=None):
         self.current_nick = args[1] + '_'
         self.irc.nick(self.current_nick)
 
-    def irc_join(self, prefix, command, args):
+    def irc_join(self, nick=None, user=None, host=None, command=None, args=None):
         self.irc.join(self.config['channel'])
 
-    def irc_invite(prefix, command, args):
+    def irc_invite(self, nick=None, user=None, host=None, command=None, args=None):
         if args[0] == self.config['channel']:
             self.irc.join(self.config['channel'])
 

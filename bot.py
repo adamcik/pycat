@@ -28,8 +28,7 @@ def listen_parser(line):
     else:
         bot.irc.privmsg(target, message)
 
-def privmsg_parser(prefix, command, args):
-    user = prefix.split('!')[0]
+def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
 
     if not message[0] in '!?':
@@ -64,12 +63,12 @@ def privmsg_parser(prefix, command, args):
             if line.strip():
                 bot.irc.privmsg(target, line)
 
-#def invite_rejoin(prefix, command, args):
-#    bot.irc.join(args[-1])
+def invite_rejoin(nick=None, user=None, host=None, command=None, args=None):
+    bot.irc.join(args[-1])
 
 listener.add(listen_parser)
 
-#bot.add('INVITE', invite_rejoin)
+bot.add('INVITE', invite_rejoin)
 bot.add('PRIVMSG', privmsg_parser)
 
 try:
