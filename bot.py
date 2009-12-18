@@ -53,11 +53,7 @@ def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
     except UnicodeDecodeError:
         response = response.decode('iso-8859-1')
 
-    if target == bot.current_nick:
-        for line in response.split('\n'):
-            if line.strip():
-                bot.irc.privmsg(user, line)
-    else:
+    if target == bot.config['channel']:
         for line in response.split('\n'):
             if line.strip():
                 bot.irc.privmsg(target, line)
