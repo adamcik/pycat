@@ -61,7 +61,6 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
-        self.current_nick = self.config['nick']
 
         self.irc = IRC(self)
 
@@ -103,8 +102,7 @@ class Bot(asynchat.async_chat):
         self.irc.pong(args[0])
 
     def irc_nick_collision(self, nick=None, user=None, host=None, command=None, args=None):
-        self.current_nick = args[1] + '_'
-        self.irc.nick(self.current_nick)
+        self.irc.nick(args[1] + '_')
 
     def irc_join(self, nick=None, user=None, host=None, command=None, args=None):
         self.irc.join(self.config['channel'])
