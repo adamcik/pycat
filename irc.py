@@ -34,8 +34,8 @@ class Bot(asynchat.async_chat):
     config = {
         'nick': 'pycat',
         'username': 'pycat',
-        'hostname': socket.getfqdn(),
-        'servername': socket.getfqdn(),
+        'hostname': '.',
+        'servername': '.',
         'realname': 'pycat',
         'channel': '#foo',
         'rate': 1,
