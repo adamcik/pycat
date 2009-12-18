@@ -10,11 +10,8 @@ logger = logging.getLogger('irc')
 # FIXME class should also fix encoding
 
 class IRC(object):
-    max_per_second = 1
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.last_send = time.time()
+    def __init__(self, sender):
+        self.sender = sender
 
     def __getattr__(self, key):
         key = key.upper()
@@ -30,17 +27,7 @@ class IRC(object):
             ctcp = args[0][len('CTCP_'):]
             args = ['PRIVMSG', args[1], '\001%s %s\001' % (ctcp, args[2])]
 
-        line = ' '.join(args[:-1]) + ' :' + args[-1]
-
-        sleep = time.time() - self.last_send
-
-        if sleep < self.max_per_second:
-            time.sleep(self.max_per_second - sleep)
-
-        logger.debug('Sending: %s', line)
-
-        self.bot.push(line.encode('utf-8') + self.bot.get_terminator())
-        self.last_send = time.time()
+        self.sender(' '.join(args[:-1]) + ' :' + args[-1])
 
 class Bot(asynchat.async_chat):
     # FIXME take in external config
@@ -51,6 +38,7 @@ class Bot(asynchat.async_chat):
         'servername': socket.getfqdn(),
         'realname': 'pycat',
         'channel': '#foo',
+        'rate': 1,
     }
 
     def __init__(self, server, port=6667):
@@ -61,8 +49,9 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
+        self.last_send = time.time()
 
-        self.irc = IRC(self)
+        self.irc = IRC(self.sender)
 
         self.set_terminator("\r\n")
 
@@ -165,3 +154,14 @@ class Bot(asynchat.async_chat):
 
         for handler in self.handlers.get(kwargs['command'], []):
             handler(**kwargs)
+
+    def sender(self, line):
+        logger.debug('Sending: %s', line)
+
+        sleep = time.time() - self.last_send
+
+        if sleep < self.config['rate']:
+            time.sleep(self.config['rate'] - sleep)
+
+        self.push(line.encode('utf-8') + self.get_terminator())
+        self.last_send = time.time()
