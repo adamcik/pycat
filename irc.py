@@ -44,7 +44,6 @@ class Bot(asynchat.async_chat):
         self.channel = channel
         self.username = pwd.getpwuid(os.getuid())[0]
 
-
         self.buffer = ''
         self.handlers = {}
         self.last_send = time.time()
@@ -53,10 +52,10 @@ class Bot(asynchat.async_chat):
 
         self.set_terminator("\r\n")
 
-        self.add('PING', self.irc_pong)
-        self.add('INVITE', self.irc_invite)
-        self.add('376', self.irc_join)
-        self.add('433', self.irc_nick_collision)
+        self.add_handler('PING', self.irc_pong)
+        self.add_handler('INVITE', self.irc_invite)
+        self.add_handler('376', self.irc_join)
+        self.add_handler('433', self.irc_nick_collision)
 
         self.reconnect()
 
@@ -66,12 +65,13 @@ class Bot(asynchat.async_chat):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.addr)
 
-    # FIXME rename and fix signature. decorator?
-    def add(self, command, handler):
-        if command not in self.handlers:
-            self.handlers[command] = []
+    def add_handler(self, event, handler):
+        event = event.upper()
 
-        self.handlers[command].append(handler)
+        if event not in self.handlers:
+            self.handlers[event] = []
+
+        self.handlers[event].append(handler)
 
     def handle_connect(self):
         logger.info('Connected to server')

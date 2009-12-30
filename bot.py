@@ -61,10 +61,10 @@ def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
 def invite_rejoin(nick=None, user=None, host=None, command=None, args=None):
     bot.irc.join(args[-1])
 
-listener.add(listen_parser)
+listener.add_handler(listen_parser)
 
-bot.add('INVITE', invite_rejoin)
-bot.add('PRIVMSG', privmsg_parser)
+bot.add_handler('INVITE', invite_rejoin)
+bot.add_handler('PRIVMSG', privmsg_parser)
 
 try:
     asyncore.loop()
