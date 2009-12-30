@@ -1,4 +1,5 @@
 import asynchat
+import atexit
 import logging
 import os
 import pwd
@@ -63,6 +64,8 @@ class Bot(asynchat.async_chat):
         self.add_handler('433', self.irc_nick_collision)
 
         self.reconnect()
+
+        atexit.register(lambda: self.irc.quit('Bye :)'))
 
     def reconnect(self):
         '''Handle clearing buffers and connection to server'''

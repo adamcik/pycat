@@ -68,5 +68,4 @@ bot.add_handler('PRIVMSG', msg_parser)
 try:
     asyncore.loop()
 except KeyboardInterrupt:
-    bot.irc.quit('Bye :)')
     sys.exit(0)
