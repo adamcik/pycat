@@ -188,4 +188,3 @@ class Bot(asynchat.async_chat):
 
         logger.debug('Sending: %s', line)
         self.push(self.encode(line) + self.get_terminator())
-        return len(line)
