@@ -52,10 +52,9 @@ def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     except UnicodeDecodeError:
         response = response.decode('iso-8859-1')
 
-    if target == bot.config['channel']:
-        for line in response.split('\n'):
-            if line.strip():
-                bot.irc.privmsg(target, line)
+    for line in response.split('\n'):
+        if line.strip():
+            bot.irc.privmsg(CHANNEL, line)
 
 def invite_rejoin(nick=None, user=None, host=None, command=None, args=None):
     bot.irc.join(args[-1])
