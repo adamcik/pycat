@@ -50,6 +50,7 @@ class Bot(asynchat.async_chat):
         self.handlers = {}
         self.reconnect_wait = 0
         self.last_send = time.time()
+        self.ready = False
 
         self.irc = IRC(self.sender)
 
@@ -58,6 +59,7 @@ class Bot(asynchat.async_chat):
         self.add_handler('PING', self.irc_pong)
         self.add_handler('INVITE', self.irc_invite)
         self.add_handler('376', self.irc_join)
+        self.add_handler('366', self.irc_end_name_list)
         self.add_handler('433', self.irc_nick_collision)
 
         self.reconnect()
@@ -65,6 +67,7 @@ class Bot(asynchat.async_chat):
     def reconnect(self):
         '''Handle clearing buffers and connection to server'''
 
+        self.ready = False
         self.discard_buffers()
         self.del_channel()
 
@@ -103,6 +106,9 @@ class Bot(asynchat.async_chat):
 
     def irc_join(self, nick=None, user=None, host=None, command=None, args=None):
         self.irc.join(self.channel)
+
+    def irc_end_name_list(self, nick=None, user=None, host=None, command=None, args=None):
+        self.ready = True
 
     def irc_invite(self, nick=None, user=None, host=None, command=None, args=None):
         if args[0] == self.channel:
