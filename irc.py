@@ -95,7 +95,6 @@ class Bot(asynchat.async_chat):
         if args[0] == self.channel:
             self.irc.join(self.channel)
 
-    # FIXME move to IRCMessage class?
     def parse_line(self, line):
         prefix = ''
 
