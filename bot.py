@@ -29,7 +29,7 @@ def listen_parser(line):
     else:
         bot.irc.privmsg(CHANNEL, line)
 
-def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
+def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
 
     if not message[0] in '!?':
@@ -63,7 +63,7 @@ def invite_rejoin(nick=None, user=None, host=None, command=None, args=None):
 listener.add_handler(listen_parser)
 
 bot.add_handler('INVITE', invite_rejoin)
-bot.add_handler('PRIVMSG', privmsg_parser)
+bot.add_handler('PRIVMSG', msg_parser)
 
 try:
     asyncore.loop()
