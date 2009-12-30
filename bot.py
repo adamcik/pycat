@@ -21,10 +21,9 @@ bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
 listener = Listener()
 
 def listen_parser(line):
-    if not line.strip():
+    if not line.strip() or not bot.ready:
         return
-
-    if line.startswith('/me '):
+    elif line.startswith('/me '):
         bot.irc.ctcp_action(CHANNEL, line[len('/me '):])
     elif line.startswith('/notice '):
         bot.irc.notice(CHANNEL, line[len('/notice '):])
