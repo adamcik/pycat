@@ -9,9 +9,6 @@ import time
 
 logger = logging.getLogger('irc')
 
-# FIXME irc message class that does parsing and building of messages
-# FIXME class should also fix encoding
-
 class IRC(object):
     def __init__(self, sender):
         self.sender = sender
