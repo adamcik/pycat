@@ -13,21 +13,21 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
-bot = Bot(('localhost', 6667), 'pycat', 'pycat', '#foo')
+CHANNEL = '#foo'
+
+bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
 listener = Listener()
 
 def listen_parser(line):
     if not line.strip():
         return
 
-    target = bot.config['channel']
-
     if line.startswith('/me '):
-        bot.irc.ctcp_action(target, line[len('/me '):])
+        bot.irc.ctcp_action(CHANNEL, line[len('/me '):])
     elif line.startswith('/notice '):
-        bot.irc.notice(target, line[len('/notice '):])
+        bot.irc.notice(CHANNEL, line[len('/notice '):])
     else:
-        bot.irc.privmsg(target, line)
+        bot.irc.privmsg(CHANNEL, line)
 
 def privmsg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
