@@ -57,8 +57,9 @@ def msg_parser(nick=None, user=None, host=None, command=None, args=None):
         if line.strip():
             bot.irc.privmsg(CHANNEL, line)
 
-def invite_rejoin(nick=None, user=None, host=None, command=None, args=None):
-    bot.irc.join(args[-1])
+def invite_rejoin(self, nick=None, user=None, host=None, command=None, args=None):
+    if args[0] == CHANNEL:
+        bot.irc.join(CHANNEL)
 
 listener.add_handler(listen_parser)
 

@@ -55,7 +55,6 @@ class Bot(asynchat.async_chat):
         self.set_terminator("\r\n")
 
         self.add_handler('PING', self.irc_pong)
-        self.add_handler('INVITE', self.irc_invite)
         self.add_handler('376', self.irc_join)
         self.add_handler('366', self.irc_end_name_list)
         self.add_handler('433', self.irc_nick_collision)
@@ -110,9 +109,6 @@ class Bot(asynchat.async_chat):
     def irc_end_name_list(self, nick=None, user=None, host=None, command=None, args=None):
         self.ready = True
 
-    def irc_invite(self, nick=None, user=None, host=None, command=None, args=None):
-        if args[0] == self.channel:
-            self.irc.join(self.channel)
 
     def parse_line(self, line):
         prefix = ''
