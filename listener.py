@@ -11,6 +11,7 @@ class Reciver(asynchat.async_chat):
 
         self.set_terminator('\n')
         self.server = server
+        self.addr = addr
         self.buffer = ''
 
     def collect_incoming_data(self, data):
@@ -24,7 +25,7 @@ class Reciver(asynchat.async_chat):
         except UnicodeDecodeError:
             line = line.decode('iso-8859-1')
 
-        logger.debug('Listener: %s', line)
+        logger.debug('Listener (%s:%s): %s', self.addr[0], self.addr[1], line)
 
         for handler in self.server.handlers:
             handler(line)
