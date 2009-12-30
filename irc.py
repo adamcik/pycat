@@ -35,7 +35,7 @@ class IRC(object):
         self.sender(' '.join(args[:-1]) + ' :' + args[-1])
 
 class Bot(asynchat.async_chat):
-    messages_per_second = 1
+    messages_per_second = 3
 
     def __init__(self, addr, nick, name, channel):
         asynchat.async_chat.__init__(self)
