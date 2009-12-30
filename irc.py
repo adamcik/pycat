@@ -26,6 +26,7 @@ class IRC(object):
 
     def _command(self, *args):
         if args[0].startswith('CTCP_'):
+            # FIXME ctcp reply should be notice?
             ctcp = args[0][len('CTCP_'):]
             args = ['PRIVMSG', args[1], '\001%s %s\001' % (ctcp, args[2])]
 
