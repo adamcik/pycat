@@ -48,6 +48,7 @@ class Bot(asynchat.async_chat):
 
         self.buffer = ''
         self.handlers = {}
+        self.reconnect_wait = 0
         self.last_send = time.time()
 
         self.irc = IRC(self.sender)
@@ -62,10 +63,18 @@ class Bot(asynchat.async_chat):
         self.reconnect()
 
     def reconnect(self):
+        '''Handle clearing buffers and connection to server'''
+
         self.discard_buffers()
+        self.del_channel()
+
+        if self.reconnect_wait:
+            time.sleep(self.reconnect_wait)
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.addr)
+
+        self.reconnect_wait = 30
 
     def add_handler(self, event, handler):
         event = event.upper()
@@ -82,6 +91,8 @@ class Bot(asynchat.async_chat):
         self.irc.user(self.username, '.', '.', self.name)
 
     def handle_close(self):
+        logger.info('Disconnected from server')
+
         self.reconnect()
 
     def irc_pong(self, nick=None, user=None, host=None, command=None, args=None):
@@ -152,6 +163,9 @@ class Bot(asynchat.async_chat):
             handler(**kwargs)
 
     def sender(self, line):
+        if not self.connected:
+            return 0
+
         logger.debug('Sending: %s', line)
 
         sleep = time.time() - self.last_send
@@ -161,3 +175,5 @@ class Bot(asynchat.async_chat):
 
         self.push(line.encode('utf-8') + self.get_terminator())
         self.last_send = time.time()
+
+        return len(line)
