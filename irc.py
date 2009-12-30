@@ -149,11 +149,7 @@ class Bot(asynchat.async_chat):
 
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
-
-        try:
-            line = line.decode('utf-8')
-        except UnicodeDecodeError:
-            line = line.decode('iso-8859-1')
+        line = self.decode(line)
 
         logger.debug('Recieved: %s', line)
 
@@ -161,6 +157,17 @@ class Bot(asynchat.async_chat):
 
         for handler in self.handlers.get(kwargs['command'], []):
             handler(**kwargs)
+
+    def decode(self, line):
+        try:
+            return line.decode('utf-8')
+        except UnicodeDecodeError:
+            return line.decode('iso-8859-1')
+
+    def encode(self, line):
+        if type(line) is unicode:
+            return line.encode('utf-8')
+        return line
 
     def sender(self, line):
         if not self.connected:
@@ -173,7 +180,7 @@ class Bot(asynchat.async_chat):
         if sleep < self.messages_per_second:
             time.sleep(self.messages_per_second - sleep)
 
-        self.push(line.encode('utf-8') + self.get_terminator())
+        self.push(self.encode(line) + self.get_terminator())
         self.last_send = time.time()
 
         return len(line)
