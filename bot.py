@@ -2,6 +2,7 @@
 
 import asyncore
 import logging
+import re
 import subprocess
 import sys
 
@@ -14,6 +15,7 @@ from listener import Listener
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
 CHANNEL = '#foo'
+PATTERN = '^[\!\?][^ ]+'
 
 bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
 listener = Listener()
@@ -32,7 +34,7 @@ def listen_parser(line):
 def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
 
-    if not message[0] in '!?':
+    if not re.match(PATTERN, message) or target != CHANNEL:
         return
 
     p = subprocess.Popen('./test.sh',
