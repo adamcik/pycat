@@ -14,7 +14,7 @@ from listener import Listener
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
-bot = Bot('localhost')
+bot = Bot(('localhost', 6667), 'pycat', 'pycat', '#foo')
 listener = Listener()
 
 def listen_parser(line):

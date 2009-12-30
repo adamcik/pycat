@@ -1,5 +1,7 @@
 import asynchat
 import logging
+import os
+import pwd
 import re
 import socket
 import time
@@ -30,22 +32,17 @@ class IRC(object):
         self.sender(' '.join(args[:-1]) + ' :' + args[-1])
 
 class Bot(asynchat.async_chat):
-    # FIXME take in external config
-    config = {
-        'nick': 'pycat',
-        'username': 'pycat',
-        'hostname': '.',
-        'servername': '.',
-        'realname': 'pycat',
-        'channel': '#foo',
-        'rate': 1,
-    }
+    messages_per_second = 1
 
-    def __init__(self, server, port=6667):
+    def __init__(self, addr, nick, name, channel):
         asynchat.async_chat.__init__(self)
 
-        self.server = server
-        self.port = port
+        self.addr = addr
+        self.nick = nick
+        self.name = name
+        self.channel = channel
+        self.username = pwd.getpwuid(os.getuid())[0]
+
 
         self.buffer = ''
         self.handlers = {}
@@ -66,7 +63,7 @@ class Bot(asynchat.async_chat):
         self.discard_buffers()
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect((self.server, self.port))
+        self.connect(self.addr)
 
     # FIXME rename and fix signature. decorator?
     def add(self, command, handler):
@@ -78,11 +75,8 @@ class Bot(asynchat.async_chat):
     def handle_connect(self):
         logger.info('Connected to server')
 
-        self.irc.nick(self.config['nick'])
-        self.irc.user(self.config['username'],
-                      self.config['hostname'],
-                      self.config['servername'],
-                      self.config['realname'])
+        self.irc.nick(self.nick)
+        self.irc.user(self.username, '.', '.', self.name)
 
     def handle_close(self):
         self.reconnect()
@@ -94,11 +88,11 @@ class Bot(asynchat.async_chat):
         self.irc.nick(args[1] + '_')
 
     def irc_join(self, nick=None, user=None, host=None, command=None, args=None):
-        self.irc.join(self.config['channel'])
+        self.irc.join(self.channel)
 
     def irc_invite(self, nick=None, user=None, host=None, command=None, args=None):
-        if args[0] == self.config['channel']:
-            self.irc.join(self.config['channel'])
+        if args[0] == self.channel:
+            self.irc.join(self.channel)
 
     # FIXME move to IRCMessage class?
     def parse_line(self, line):
@@ -160,8 +154,8 @@ class Bot(asynchat.async_chat):
 
         sleep = time.time() - self.last_send
 
-        if sleep < self.config['rate']:
-            time.sleep(self.config['rate'] - sleep)
+        if sleep < self.messages_per_second:
+            time.sleep(self.messages_per_second - sleep)
 
         self.push(line.encode('utf-8') + self.get_terminator())
         self.last_send = time.time()
