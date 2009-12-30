@@ -169,18 +169,17 @@ class Bot(asynchat.async_chat):
             return line.encode('utf-8')
         return line
 
-    def sender(self, line):
-        if not self.connected:
-            return 0
-
-        logger.debug('Sending: %s', line)
-
+    def throttle(self):
         sleep = time.time() - self.last_send
 
         if sleep < self.messages_per_second:
             time.sleep(self.messages_per_second - sleep)
 
-        self.push(self.encode(line) + self.get_terminator())
         self.last_send = time.time()
 
+    def sender(self, line):
+        self.throttle()
+
+        logger.debug('Sending: %s', line)
+        self.push(self.encode(line) + self.get_terminator())
         return len(line)
