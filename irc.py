@@ -40,6 +40,7 @@ class Bot(asynchat.async_chat):
 
         self.addr = addr
         self.nick = nick
+        self.currentnick = nick
         self.name = name
         self.channel = channel
         self.username = pwd.getpwuid(os.getuid())[0]
@@ -107,6 +108,7 @@ class Bot(asynchat.async_chat):
         self.irc.pong(args[0])
 
     def irc_nick_collision(self, nick=None, user=None, host=None, command=None, args=None):
+        self.currentnick = args[1] + '_'
         self.irc.nick(args[1] + '_')
 
     def irc_join(self, nick=None, user=None, host=None, command=None, args=None):
