@@ -158,7 +158,7 @@ class Bot(asynchat.async_chat):
 
     def found_terminator(self):
         line, self.buffer = self.buffer, ''
-        line = self.decode(line)
+        line = self.decode(line).strip()
 
         logger.debug('Recieved: %s', line)
 
