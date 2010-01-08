@@ -93,7 +93,7 @@ class Bot(asynchat.async_chat):
         self.handlers[event].append(handler)
 
     def handle_connect(self):
-        logger.info('Connected to server')
+        logger.info('Connecting to server %s:%s' % self.addr)
 
         self.irc.nick(self.nick)
         self.irc.user(self.username, '.', '.', self.name)
