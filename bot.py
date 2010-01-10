@@ -22,16 +22,6 @@ PATTERN = '^[\!\?][^ ]+'
 
 bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
 
-def listen_parser(line):
-    if not line.strip() or not bot.ready:
-        return
-    elif line.startswith('/me '):
-        bot.irc.ctcp_action(CHANNEL, line[len('/me '):])
-    elif line.startswith('/notice '):
-        bot.irc.notice(CHANNEL, line[len('/notice '):])
-    else:
-        bot.irc.privmsg(CHANNEL, line)
-
 def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
 
@@ -149,7 +139,17 @@ class PyCatBot(SingleServerIRCBot):
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
 
-            print message
+            self.handle_reciver_message(message)
+
+    def handle_reciver_message(self, message):
+        if not message.strip() or not self.connection.is_connected():
+            return
+        elif message.startswith('/me '):
+            self.connection.action(CHANNEL, message[len('/me '):])
+        elif message.startswith('/notice '):
+            self.connection.notice(CHANNEL, message[len('/notice '):])
+        else:
+            self.connection.privmsg(CHANNEL, message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
