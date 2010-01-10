@@ -3,9 +3,11 @@
 import asyncore
 import logging
 import re
+import select
 import signal
 import subprocess
 import sys
+import time
 
 from irc import Bot
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick
@@ -105,6 +107,10 @@ class PyCatBot(SingleServerIRCBot):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
 
         self.channel = channel
+        self.sockets = []
+
+        self.ircobj.fn_to_add_socket = self.sockets.append
+        self.ircobj.fn_to_remove_socket = self.sockets.remove
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
@@ -118,10 +124,24 @@ class PyCatBot(SingleServerIRCBot):
 
         print sender, ':',  message
 
+    def start(self):
+        self._connect()
+
+        while 1:
+            self.process_once()
+
+    def process_once(self, timeout=0.2):
+        if self.sockets:
+            rlist, wlist, xlist = select.select(self.sockets, [], [], timeout)
+            self.ircobj.process_data(rlist)
+        else:
+            time.sleep(timeout)
+
+        self.ircobj.process_timeout()
+
 pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
 
 try:
-    #asyncore.loop()
     pycat.start()
 except KeyboardInterrupt:
     sys.exit(0)
