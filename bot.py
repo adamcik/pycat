@@ -4,6 +4,7 @@ import logging
 import re
 import select
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -75,9 +76,17 @@ class PyCatBot(SingleServerIRCBot):
 
         self.channel = channel
         self.sockets = []
+        self.recivers = []
 
         self.ircobj.fn_to_add_socket = self.sockets.append
         self.ircobj.fn_to_remove_socket = self.sockets.remove
+
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener.setblocking(0)
+        self.listener.bind(('', 12345))
+        self.listener.listen(5)
+
+        self.sockets.append(self.listener)
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
@@ -118,7 +127,18 @@ class PyCatBot(SingleServerIRCBot):
     def process_once(self, timeout=0.2):
         if self.sockets:
             rlist, wlist, xlist = select.select(self.sockets, [], [], timeout)
+
             self.ircobj.process_data(rlist)
+
+            for sock in rlist:
+                if sock in self.recivers:
+                    print sock.recv(1024)
+
+                elif sock is self.listener:
+                    conn, addr = sock.accept()
+                    self.sockets.append(conn)
+                    self.recivers.append(conn)
+
         else:
             time.sleep(timeout)
 
