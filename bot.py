@@ -139,7 +139,11 @@ class PyCatBot(SingleServerIRCBot):
             self.connection.disconnect('Bye :)')
 
     def handle_reciver(self, sock):
-        print sock.recv(1024)
+        if sock not in self.buffers:
+            self.buffers[sock] = u''
+
+        data= self.decode(sock.recv(512))
+        self.buffers[sock] += data
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
@@ -150,6 +154,13 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
+
+    def decode(self, data):
+        try:
+            data = data.decode('utf-8')
+        except UnicodeDecodeError:
+            data = data.decode('iso-8859-1')
+        return data
 
 pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
 
