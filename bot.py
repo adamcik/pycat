@@ -145,6 +145,12 @@ class PyCatBot(SingleServerIRCBot):
         data= self.decode(sock.recv(512))
         self.buffers[sock] += data
 
+        while '\n' in self.buffers[sock]:
+            message, trailing = self.buffers[sock].split('\n', 1)
+            self.buffers[sock] = trailing
+
+            print message
+
     def handle_listener(self, sock):
         conn, addr = sock.accept()
         self.recivers.append(conn)
