@@ -101,8 +101,13 @@ bot.add_handler('PRIVMSG', msg_parser)
 bot.add_handler('ALL', reset_sigalarm)
 
 class PyCatBot(SingleServerIRCBot):
+    def __init__(self, server_list, nick, real, channel):
+        SingleServerIRCBot.__init__(self, server_list, nick, real)
+
+        self.channel = channel
+
     def on_welcome(self, conn, event):
-        conn.join(CHANNEL)
+        conn.join(self.channel)
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
@@ -113,7 +118,7 @@ class PyCatBot(SingleServerIRCBot):
 
         print sender, ':',  message
 
-pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat')
+pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
 
 try:
     #asyncore.loop()
