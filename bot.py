@@ -118,6 +118,10 @@ class PyCatBot(SingleServerIRCBot):
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
 
+    def on_invite(self, conn, event):
+        if event.arguments()[0] == self.channel:
+            conn.join(self.channel)
+
     def on_pubmsg(self, conn, event):
         sender = get_nick(event.source())
         message = event.arguments()[0]
