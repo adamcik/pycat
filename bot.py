@@ -10,7 +10,7 @@ import sys
 import time
 
 from irc import Bot
-from ircbot import SingleServerIRCBot, nm_to_n as get_nick
+from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 from listener import Listener
 
 # FIXME figure out async subprocess
@@ -116,6 +116,16 @@ class PyCatBot(SingleServerIRCBot):
     def on_invite(self, conn, event):
         if event.arguments()[0] == self.channel:
             conn.join(self.channel)
+
+    def on_mode(self, conn, event):
+        if event.target() != self.channel:
+            return
+
+        nick = conn.get_nickname()
+        modes = parse_channel_modes(' '.join(event.arguments()))
+
+        if ['+', 'o', nick] in modes:
+            conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
 
     def on_pubmsg(self, conn, event):
         sender = get_nick(event.source())
