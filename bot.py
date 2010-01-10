@@ -78,6 +78,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.sockets = []
         self.recivers = []
+        self.buffers = {}
         self.listener = self.get_listener()
 
         self.ircobj.fn_to_add_socket = self.sockets.append
@@ -121,24 +122,21 @@ class PyCatBot(SingleServerIRCBot):
         self._connect()
 
         while 1:
-            self.process_once()
+            sockets = self.sockets + [self.listener] + self.recivers
+
+            for sock in select.select(sockets, [], [], 0.2)[0]:
+                if sock in self.recivers:
+                    self.handle_reciver(sock)
+                elif sock is self.listener:
+                    self.handle_listener(sock)
+                elif sock in self.sockets:
+                    self.handle_irc(sock)
+
+            self.handle_timeout()
 
     def stop(self):
         if self.connection.is_connected():
             self.connection.disconnect('Bye :)')
-
-    def process_once(self, timeout=0.2):
-        sockets = self.sockets + [self.listener] + self.recivers
-
-        for sock in select.select(sockets, [], [], timeout)[0]:
-            if sock in self.recivers:
-                self.handle_reciver(sock)
-            elif sock is self.listener:
-                self.handle_listener(sock)
-            elif sock in self.sockets:
-                self.handle_irc(sock)
-
-        self.handle_timeout()
 
     def handle_reciver(self, sock):
         print sock.recv(1024)
