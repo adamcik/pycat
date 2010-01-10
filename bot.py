@@ -10,7 +10,6 @@ import time
 
 from irc import Bot
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
-from listener import Listener
 
 # FIXME figure out async subprocess
 # FIXME use optparse and/or configreader
@@ -21,7 +20,6 @@ CHANNEL = '#foo'
 PATTERN = '^[\!\?][^ ]+'
 
 bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
-listener = Listener()
 
 def listen_parser(line):
     if not line.strip() or not bot.ready:
@@ -67,8 +65,6 @@ def alarm_handler(signum, frame):
     bot.irc.version('')
 
 signal.signal(signal.SIGALRM, alarm_handler)
-
-listener.add_handler(listen_parser)
 
 bot.add_handler('PRIVMSG', msg_parser)
 bot.add_handler('ALL', reset_sigalarm)
