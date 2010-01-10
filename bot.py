@@ -75,18 +75,21 @@ class PyCatBot(SingleServerIRCBot):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
 
         self.channel = channel
+
         self.sockets = []
         self.recivers = []
+        self.listener = self.get_listener()
 
         self.ircobj.fn_to_add_socket = self.sockets.append
         self.ircobj.fn_to_remove_socket = self.sockets.remove
 
-        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listener.setblocking(0)
-        self.listener.bind(('', 12345))
-        self.listener.listen(5)
+    def get_listener(self, addr=('', 12345)):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setblocking(0)
+        listener.bind(addr)
+        listener.listen(5)
 
-        self.sockets.append(self.listener)
+        return listener
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
@@ -125,23 +128,29 @@ class PyCatBot(SingleServerIRCBot):
             self.connection.disconnect('Bye :)')
 
     def process_once(self, timeout=0.2):
-        if self.sockets:
-            rlist, wlist, xlist = select.select(self.sockets, [], [], timeout)
+        sockets = self.sockets + [self.listener] + self.recivers
 
-            self.ircobj.process_data(rlist)
+        for sock in select.select(sockets, [], [], timeout)[0]:
+            if sock in self.recivers:
+                self.handle_reciver(sock)
+            elif sock is self.listener:
+                self.handle_listener(sock)
+            elif sock in self.sockets:
+                self.handle_irc(sock)
 
-            for sock in rlist:
-                if sock in self.recivers:
-                    print sock.recv(1024)
+        self.handle_timeout()
 
-                elif sock is self.listener:
-                    conn, addr = sock.accept()
-                    self.sockets.append(conn)
-                    self.recivers.append(conn)
+    def handle_reciver(self, sock):
+        print sock.recv(1024)
 
-        else:
-            time.sleep(timeout)
+    def handle_listener(self, sock):
+        conn, addr = sock.accept()
+        self.recivers.append(conn)
 
+    def handle_irc(self, sock):
+        self.ircobj.process_data([sock])
+
+    def handle_timeout(self):
         self.ircobj.process_timeout()
 
 pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
