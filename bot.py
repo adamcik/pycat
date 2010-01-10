@@ -83,10 +83,6 @@ def mode_parser(nick=None, user=None, host=None, command=None, args=None):
     if (u'+o', bot.currentnick) in changes:
         bot.irc.mode(CHANNEL, '+v-o', bot.currentnick, bot.currentnick)
 
-def invite_rejoin(self, nick=None, user=None, host=None, command=None, args=None):
-    if args[0] == CHANNEL:
-        bot.irc.join(CHANNEL)
-
 def reset_sigalarm(nick=None, user=None, host=None, command=None, args=None):
     signal.alarm(300)
 
@@ -97,7 +93,6 @@ signal.signal(signal.SIGALRM, alarm_handler)
 
 listener.add_handler(listen_parser)
 
-bot.add_handler('INVITE', invite_rejoin)
 bot.add_handler('MODE', mode_parser)
 bot.add_handler('PRIVMSG', msg_parser)
 bot.add_handler('ALL', reset_sigalarm)
