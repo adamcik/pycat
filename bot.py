@@ -1,6 +1,5 @@
 #! /usr/bin/python
 
-import asyncore
 import logging
 import re
 import select
