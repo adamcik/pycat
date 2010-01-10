@@ -115,6 +115,10 @@ class PyCatBot(SingleServerIRCBot):
         while 1:
             self.process_once()
 
+    def stop(self):
+        if self.connection.is_connected():
+            self.connection.disconnect('Bye :)')
+
     def process_once(self, timeout=0.2):
         if self.sockets:
             rlist, wlist, xlist = select.select(self.sockets, [], [], timeout)
@@ -129,4 +133,4 @@ pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
 try:
     pycat.start()
 except KeyboardInterrupt:
-    sys.exit(0)
+    pycat.stop()
