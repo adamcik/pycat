@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from irc import Bot
+from ircbot import SingleServerIRCBot, nm_to_n as get_nick
 from listener import Listener
 
 # FIXME figure out async subprocess
@@ -99,7 +100,23 @@ bot.add_handler('MODE', mode_parser)
 bot.add_handler('PRIVMSG', msg_parser)
 bot.add_handler('ALL', reset_sigalarm)
 
+class PyCatBot(SingleServerIRCBot):
+    def on_welcome(self, conn, event):
+        conn.join(CHANNEL)
+
+    def on_nicknameinuse(self, conn, event):
+        conn.nick(conn.get_nickname() + '_')
+
+    def on_pubmsg(self, conn, event):
+        sender = get_nick(event.source())
+        message = event.arguments()[0]
+
+        print sender, ':',  message
+
+pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat')
+
 try:
-    asyncore.loop()
+    #asyncore.loop()
+    pycat.start()
 except KeyboardInterrupt:
     sys.exit(0)
