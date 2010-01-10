@@ -61,28 +61,6 @@ def msg_parser(nick=None, user=None, host=None, command=None, args=None):
         if line.strip():
             bot.irc.privmsg(CHANNEL, line)
 
-def mode_parser(nick=None, user=None, host=None, command=None, args=None):
-    target = args[0]
-    modifiers = args[1]
-
-    if target != CHANNEL:
-        return
-
-    state = ''
-    available = args[2:]
-    changes = []
-
-    for char in modifiers:
-        if char in '+-':
-            state = char
-        elif char in 'bklvo':
-            changes.append((state+char, available.pop(0)))
-        else:
-            changes.append((state+char, None))
-
-    if (u'+o', bot.currentnick) in changes:
-        bot.irc.mode(CHANNEL, '+v-o', bot.currentnick, bot.currentnick)
-
 def reset_sigalarm(nick=None, user=None, host=None, command=None, args=None):
     signal.alarm(300)
 
@@ -93,7 +71,6 @@ signal.signal(signal.SIGALRM, alarm_handler)
 
 listener.add_handler(listen_parser)
 
-bot.add_handler('MODE', mode_parser)
 bot.add_handler('PRIVMSG', msg_parser)
 bot.add_handler('ALL', reset_sigalarm)
 
