@@ -3,6 +3,7 @@
 import asyncore
 import logging
 import re
+import signal
 import subprocess
 import sys
 
@@ -83,11 +84,20 @@ def invite_rejoin(self, nick=None, user=None, host=None, command=None, args=None
     if args[0] == CHANNEL:
         bot.irc.join(CHANNEL)
 
+def reset_sigalarm(nick=None, user=None, host=None, command=None, args=None):
+    signal.alarm(300)
+
+def alarm_handler(signum, frame):
+    bot.irc.version('')
+
+signal.signal(signal.SIGALRM, alarm_handler)
+
 listener.add_handler(listen_parser)
 
 bot.add_handler('INVITE', invite_rejoin)
 bot.add_handler('MODE', mode_parser)
 bot.add_handler('PRIVMSG', msg_parser)
+bot.add_handler('ALL', reset_sigalarm)
 
 try:
     asyncore.loop()

@@ -164,6 +164,9 @@ class Bot(asynchat.async_chat):
 
         kwargs = self.parse_line(line)
 
+        for handler in self.handlers.get('ALL', []):
+            handler(**kwargs)
+
         for handler in self.handlers.get(kwargs['command'], []):
             handler(**kwargs)
 
