@@ -150,6 +150,7 @@ class PyCatBot(SingleServerIRCBot):
             self.buffers[sock] = trailing
 
             self.handle_reciver_message(message)
+            logging.debug('%s %s', sock.getpeername()[0], message)
 
     def handle_reciver_message(self, message):
         message = message.encode('utf-8')
