@@ -66,7 +66,7 @@ class PyCatBot(SingleServerIRCBot):
         orignial_send_raw = self.connection.send_raw
 
         def send_raw(string):
-            logging.debug(string)
+            logging.debug(string.decode('utf-8'))
             orignial_send_raw(string)
 
         def logger(conn, event):
