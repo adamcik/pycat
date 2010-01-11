@@ -139,6 +139,8 @@ class PyCatBot(SingleServerIRCBot):
             self.handle_reciver_message(message)
 
     def handle_reciver_message(self, message):
+        message = message.encode('utf-8')
+
         if not message.strip() or not self.connection.is_connected():
             return
         elif message.startswith('/me '):
