@@ -121,17 +121,18 @@ class PyCatBot(SingleServerIRCBot):
 
         if len(data) == 0:
             self.processes.remove(sock)
-            del self.buffers[sock]
             sock.close()
-            return
-
-        self.buffers[sock] += self.decode(data)
+        else:
+            self.buffers[sock] += self.decode(data)
 
         while '\n' in self.buffers[sock]:
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
 
             self.handle_reciver_message(message)
+
+        if len(data) == 0:
+            del self.buffers[sock]
 
     def handle_reciver(self, sock):
         if sock not in self.buffers:
@@ -141,11 +142,10 @@ class PyCatBot(SingleServerIRCBot):
 
         if len(data) == 0:
             self.recivers.remove(sock)
-            del self.buffers[sock]
+            sock.close()
             logging.debug('%s disconnected', sock.getpeername()[0])
-            return
-
-        self.buffers[sock] += self.decode(data)
+        else:
+            self.buffers[sock] += self.decode(data)
 
         while '\n' in self.buffers[sock]:
             message, trailing = self.buffers[sock].split('\n', 1)
@@ -153,6 +153,9 @@ class PyCatBot(SingleServerIRCBot):
 
             self.handle_reciver_message(message)
             logging.debug('%s %s', sock.getpeername()[0], message)
+
+        if len(data) == 0:
+            del self.buffers[sock]
 
     def handle_reciver_message(self, message):
         message = message.encode('utf-8')
