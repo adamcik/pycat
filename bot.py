@@ -61,6 +61,7 @@ class PyCatBot(SingleServerIRCBot):
         self.buffers = {}
         self.listener = self.get_listener()
 
+        self.last_seen = time.time()
         self.ircobj.fn_to_add_socket = self.sockets.append
         self.ircobj.fn_to_remove_socket = self.sockets.remove
         self.ircobj.add_global_handler('all_raw_messages', self.logger)
@@ -152,9 +153,16 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_irc(self, sock):
         self.ircobj.process_data([sock])
+        self.last_seen = time.time()
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
+        self.check_connection()
+
+    def check_connection(self):
+        # FIXME test if this is needed
+        if time.time() - self.last_seen > 300:
+            self.connection.version()
 
     def decode(self, data):
         try:
