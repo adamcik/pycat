@@ -8,7 +8,6 @@ import subprocess
 import sys
 import time
 
-from irc import Bot
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 
 # FIXME figure out async subprocess
@@ -18,8 +17,6 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 
 CHANNEL = '#foo'
 PATTERN = '^[\!\?][^ ]+'
-
-bot = Bot(('localhost', 6667), 'pycat', 'pycat', CHANNEL)
 
 def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     target, message = args
@@ -47,8 +44,6 @@ def msg_parser(nick=None, user=None, host=None, command=None, args=None):
     for line in response.split('\n'):
         if line.strip():
             bot.irc.privmsg(CHANNEL, line)
-
-bot.add_handler('PRIVMSG', msg_parser)
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel):
