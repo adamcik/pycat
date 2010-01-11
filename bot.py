@@ -73,6 +73,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.ircobj.fn_to_add_socket = self.sockets.append
         self.ircobj.fn_to_remove_socket = self.sockets.remove
+        self.ircobj.add_global_handler('all_raw_messages', self.logger)
 
     def get_listener(self, addr=('', 12345)):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -81,6 +82,10 @@ class PyCatBot(SingleServerIRCBot):
         listener.listen(5)
 
         return listener
+
+    def logger(self, conn, event):
+        line = u' '.join(event.arguments())
+        logging.debug(line)
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
