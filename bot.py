@@ -3,7 +3,6 @@
 import logging
 import re
 import select
-import signal
 import socket
 import subprocess
 import sys
@@ -49,16 +48,7 @@ def msg_parser(nick=None, user=None, host=None, command=None, args=None):
         if line.strip():
             bot.irc.privmsg(CHANNEL, line)
 
-def reset_sigalarm(nick=None, user=None, host=None, command=None, args=None):
-    signal.alarm(300)
-
-def alarm_handler(signum, frame):
-    bot.irc.version('')
-
-signal.signal(signal.SIGALRM, alarm_handler)
-
 bot.add_handler('PRIVMSG', msg_parser)
-bot.add_handler('ALL', reset_sigalarm)
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel):
