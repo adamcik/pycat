@@ -26,6 +26,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.sockets = []
         self.recivers = []
+        self.processes = []
         self.buffers = {}
         self.listener = self.get_listener()
 
@@ -78,16 +79,21 @@ class PyCatBot(SingleServerIRCBot):
             conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
 
     def on_pubmsg(self, conn, event):
-        sender = get_nick(event.source())
-        message = event.arguments()[0]
+        channel = event.target()
+        nick = get_nick(event.source())
+        message = self.decode(event.arguments()[0])
 
-        print sender, ':',  message
+        p = subprocess.Popen(['./test.sh', channel, nick, message],
+            bufsize=1024, stdout=subprocess.PIPE)
+
+        self.processes.append(p.stdout)
 
     def start(self):
         self._connect()
 
         while 1:
-            sockets = self.sockets + self.recivers + [self.listener]
+            sockets = self.sockets + self.recivers + \
+                self.processes + [self.listener]
             self.process_sockets(sockets)
 
     def stop(self):
@@ -102,8 +108,30 @@ class PyCatBot(SingleServerIRCBot):
                 self.handle_listener(sock)
             elif sock in self.sockets:
                 self.handle_irc(sock)
+            elif sock in self.processes:
+                self.handle_process(sock)
 
         self.handle_timeout()
+
+    def handle_process(self, sock):
+        if sock not in self.buffers:
+            self.buffers[sock] = u''
+
+        data = sock.read(512)
+
+        if len(data) == 0:
+            self.processes.remove(sock)
+            del self.buffers[sock]
+            sock.close()
+            return
+
+        self.buffers[sock] += self.decode(data)
+
+        while '\n' in self.buffers[sock]:
+            message, trailing = self.buffers[sock].split('\n', 1)
+            self.buffers[sock] = trailing
+
+            self.handle_reciver_message(message)
 
     def handle_reciver(self, sock):
         if sock not in self.buffers:
