@@ -18,33 +18,6 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
 CHANNEL = '#foo'
 PATTERN = '^[\!\?][^ ]+'
 
-def msg_parser(nick=None, user=None, host=None, command=None, args=None):
-    target, message = args
-
-    if not re.match(PATTERN, message) or target != CHANNEL:
-        return
-
-    p = subprocess.Popen('./test.sh',
-        shell=True,
-        bufsize=1024,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE)
-
-    # FIXME this will block
-    response = p.communicate(input=message.encode('utf-8'))[0]
-
-    if not response.strip():
-        return
-
-    try:
-        response = response.decode('utf-8')
-    except UnicodeDecodeError:
-        response = response.decode('iso-8859-1')
-
-    for line in response.split('\n'):
-        if line.strip():
-            bot.irc.privmsg(CHANNEL, line)
-
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
