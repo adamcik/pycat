@@ -61,6 +61,14 @@ class PyCatBot(SingleServerIRCBot):
         self.ircobj.fn_to_remove_socket = self.sockets.remove
         self.ircobj.add_global_handler('all_raw_messages', self.logger)
 
+        orignial_send_raw = self.connection.send_raw
+
+        def send_raw(string):
+            logging.debug(string)
+            orignial_send_raw(string)
+
+        self.connection.send_raw = send_raw
+
     def get_listener(self, addr=('', 12345)):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setblocking(0)
