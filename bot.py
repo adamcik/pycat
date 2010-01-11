@@ -141,6 +141,7 @@ class PyCatBot(SingleServerIRCBot):
         if len(data) == 0:
             self.recivers.remove(sock)
             del self.buffers[sock]
+            logging.debug('%s disconnected', sock.getpeername()[0])
             return
 
         self.buffers[sock] += self.decode(data)
@@ -166,6 +167,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
+        logging.debug('%s connected', addr[0])
         self.recivers.append(conn)
 
     def handle_irc(self, sock):
