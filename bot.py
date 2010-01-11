@@ -123,8 +123,14 @@ class PyCatBot(SingleServerIRCBot):
         if sock not in self.buffers:
             self.buffers[sock] = u''
 
-        data= self.decode(sock.recv(512))
-        self.buffers[sock] += data
+        data = sock.recv(512)
+
+        if len(data) == 0:
+            self.recivers.remove(sock)
+            del self.buffers[sock]
+            return
+
+        self.buffers[sock] += self.decode(data)
 
         while '\n' in self.buffers[sock]:
             message, trailing = self.buffers[sock].split('\n', 1)
