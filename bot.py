@@ -10,7 +10,6 @@ import time
 
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 
-# FIXME figure out async subprocess
 # FIXME use optparse and/or configreader
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
