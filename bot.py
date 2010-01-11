@@ -1,11 +1,9 @@
 #! /usr/bin/python
 
 import logging
-import re
 import select
 import socket
 import subprocess
-import sys
 import time
 
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
