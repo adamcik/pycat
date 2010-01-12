@@ -224,15 +224,19 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_irc(self, sock):
         self.ircobj.process_data([sock])
-        self.last_seen = time.time()
+        self.last_recv = time.time()
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
         self.check_connection()
 
     def check_connection(self):
-        # FIXME test if this is needed
-        if time.time() - self.last_seen > 300:
+        if self.last_recv > self.last_send:
+            last = self.last_recv
+        else:
+            last = self.last_send
+
+        if time.time() - last > 300:
             self.connection.version()
 
     def decode(self, data):
