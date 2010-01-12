@@ -8,7 +8,8 @@ import time
 
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 
-# FIXME use optparse and/or configreader
+# FIXME use optparse and/or configreader and/or sys.args
+# FIXME fix rate limiting
 
 LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
