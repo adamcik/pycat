@@ -59,7 +59,9 @@ class PyCatBot(SingleServerIRCBot):
         def handle_send_buffer():
             since_last = time.time() - self.last_send
 
-            if since_last < self.send_frequency:
+            if not self.send_buffer:
+                return
+            elif since_last < self.send_frequency:
                 delay = self.send_frequency - since_last
                 self.send_scheduled = True
                 self.connection.execute_delayed(delay, handle_send_buffer)
