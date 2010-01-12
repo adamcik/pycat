@@ -9,6 +9,7 @@ import sys
 import time
 
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
+from optparse import OptionParser, OptionValueError
 
 LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
@@ -254,22 +255,39 @@ class PyCatBot(SingleServerIRCBot):
         return data
 
 def main():
-    if len(sys.argv) != 7:
-        usage()
+    usage = 'usage: %prog [options] server1[:port][,server2] nickname channel'
 
-    raw_servers, listen, nick, real, channel, script = sys.argv[1:]
+    parser = OptionParser(usage=usage)
+    parser.add_option('-l', '--listen')
+    parser.add_option('-r', '--realname')
+    parser.add_option('-e', '--executable')
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 3:
+        parser.print_help()
+        sys.exit(0)
+
+    raw_servers, nickname, channel = args
     servers = []
 
     for addr in raw_servers.split(','):
-        if ':' in addr:
-            servers.append(addr.split(':', 1))
+        if addr and ':' in addr:
+            host, port = addr.split(':', 1)
+            servers.append((host, int(port)))
         else:
-            servers.append([addr, 6667])
+            servers.append((addr, 6667))
 
-    listen = listen.split(':', 1)
-    listen[1] = int(listen[1])
+    if options.listen and ':' in options.listen:
+        host, port = options.listen.split(':', 1)
+        listen = (host, int(port))
+    else:
+        listen = (options.listen, 12345)
 
-    pycat = PyCatBot(servers, nick, real, channel, listen, script)
+    realname = options.realname or nickname
+    executable = options.executable
+
+    pycat = PyCatBot(servers, nickname, realname, channel, listen, executable)
 
     try:
         pycat.start()
@@ -277,10 +295,6 @@ def main():
         pass
 
     pycat.stop()
-
-def usage():
-    print '%s server[:port][,server2[:port]] [interface]:port nick realname channel script' % sys.argv[0]
-    sys.exit(0)
 
 if __name__ == '__main__':
     main()
