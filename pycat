@@ -134,10 +134,12 @@ class PyCatBot(SingleServerIRCBot):
         nick = get_nick(event.source())
         message = self.decode(event.arguments()[0])
 
-        p = subprocess.Popen([self.script, channel, nick, message],
-            bufsize=1024, stdout=subprocess.PIPE)
-
-        self.processes.append(p.stdout)
+        try:
+            p = subprocess.Popen([self.script, channel, nick, message],
+                bufsize=1024, stdout=subprocess.PIPE)
+            self.processes.append(p.stdout)
+        except OSError, e:
+            self.loggers['process'].error('Could not start process: %s', e)
 
     def start(self):
         self._connect()
