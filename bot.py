@@ -213,11 +213,15 @@ class PyCatBot(SingleServerIRCBot):
             del self.buffers[sock]
 
     def send_message(self, message):
-        message = message.encode('utf-8')
-
-        if not message.strip() or not self.connection.is_connected():
+        if not message.strip():
             return
-        elif message.startswith('/me '):
+        elif self.channel not in self.channels:
+            self.loggers['irc'].debug('Discarding message: %s', message)
+            return
+        else:
+            message = message.encode('utf-8')
+
+        if message.startswith('/me '):
             self.connection.action(self.channel, message[len('/me '):])
         elif message.startswith('/notice '):
             self.connection.notice(self.channel, message[len('/notice '):])
