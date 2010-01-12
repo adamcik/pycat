@@ -142,7 +142,7 @@ class PyCatBot(SingleServerIRCBot):
 
         if sock not in self.buffers:
             self.buffers[sock] = u''
-        
+
         data = reader()
 
         if len(data) == 0:
@@ -152,7 +152,7 @@ class PyCatBot(SingleServerIRCBot):
             sock.close()
         else:
             self.buffers[sock] += self.decode(data)
-            
+
         while '\n' in self.buffers[sock]:
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
