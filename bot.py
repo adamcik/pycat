@@ -20,7 +20,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.channel = channel
         self.script = script
-        self.listen_addr = tuple(listen_addr)
+        self.listen_addr = listen_addr
 
         self.recivers = []
         self.processes = []
@@ -282,7 +282,7 @@ def main():
         host, port = options.listen.split(':', 1)
         listen = (host, int(port))
     else:
-        listen = (options.listen, 12345)
+        listen = None
 
     realname = options.realname or nickname
     executable = options.executable
