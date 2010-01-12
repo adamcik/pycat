@@ -103,6 +103,11 @@ class PyCatBot(SingleServerIRCBot):
         if self.connection.is_connected():
             self.connection.disconnect('Bye :)')
 
+        self.listener.close()
+
+        for sock in self.recivers + self.processes:
+            sock.close()
+
     def process_sockets(self, sockets):
         for sock in select.select(sockets, [], [], 0.2)[0]:
             if sock in self.recivers:
