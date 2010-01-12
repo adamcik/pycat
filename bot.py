@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import logging
+import re
 import select
 import socket
 import subprocess
@@ -9,7 +10,6 @@ import time
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 
 # FIXME use optparse and/or configreader and/or sys.args
-# FIXME fix rate limiting
 
 LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
@@ -24,33 +24,74 @@ class PyCatBot(SingleServerIRCBot):
         self.sockets = []
         self.recivers = []
         self.processes = []
+        self.commands = []
         self.buffers = {}
+        self.send_buffer = []
         self.loggers = {}
+
         self.listener = self.get_listener()
 
-        self.last_seen = time.time()
+        self.last_send = time.time()
+        self.last_recv = time.time()
+        self.send_frequency = 2
+        self.send_scheduled = False
+
         self.ircobj.fn_to_add_socket = self.sockets.append
         self.ircobj.fn_to_remove_socket = self.sockets.remove
 
         self.setup_logging()
+        self.setup_throttling()
 
     def setup_logging(self):
         self.loggers['irc'] = logging.getLogger('irc')
         self.loggers['process'] = logging.getLogger('process')
         self.loggers['reciver'] = logging.getLogger('reciver')
 
-        orignial_send_raw = self.connection.send_raw
-
-        def send_raw(string):
-            self.loggers['irc'].debug(string.decode('utf-8'))
-            orignial_send_raw(string)
-
         def logger(conn, event):
             line = u' '.join(event.arguments())
             self.loggers['irc'].debug(line)
 
         self.connection.add_global_handler('all_raw_messages', logger)
-        self.connection.send_raw = send_raw
+
+    def setup_throttling(self):
+        orignial_send_raw = self.connection.send_raw
+
+        def send_raw(string):
+            self.loggers['irc'].debug(string.decode('utf-8'))
+            self.last_send = time.time()
+            orignial_send_raw(string)
+
+        def handle_send_buffer():
+            since_last = time.time() - self.last_send
+
+            if since_last < self.send_frequency:
+                delay = self.send_frequency - since_last
+                self.send_scheduled = True
+                self.connection.execute_delayed(delay, handle_send_buffer)
+                return
+
+            string = self.send_buffer.pop(0)
+
+            send_raw(string)
+
+            if self.send_buffer:
+                self.send_scheduled = True
+                self.connection.execute_delayed(self.send_frequency,
+                    handle_send_buffer)
+            else:
+                self.send_scheduled = False
+
+        def throttling(string):
+            if not re.match('^(PRIVMSG|NOTICE)', string):
+                send_raw(string)
+                return
+
+            self.send_buffer.append(string)
+
+            if not self.send_scheduled:
+                handle_send_buffer()
+
+        self.connection.send_raw = throttling
 
     def get_listener(self, addr=('', 12345)):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
