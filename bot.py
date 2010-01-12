@@ -21,7 +21,6 @@ class PyCatBot(SingleServerIRCBot):
         self.channel = channel
         self.script = script
 
-        self.sockets = []
         self.recivers = []
         self.processes = []
         self.commands = []
@@ -35,9 +34,6 @@ class PyCatBot(SingleServerIRCBot):
         self.last_recv = time.time()
         self.send_frequency = 2
         self.send_scheduled = False
-
-        self.ircobj.fn_to_add_socket = self.sockets.append
-        self.ircobj.fn_to_remove_socket = self.sockets.remove
 
         self.setup_logging()
         self.setup_throttling()
@@ -135,8 +131,12 @@ class PyCatBot(SingleServerIRCBot):
         self._connect()
 
         while 1:
-            sockets = self.sockets + self.recivers + \
-                self.processes + [self.listener]
+            sockets = self.processes + self.recivers
+            sockets.append(self.listener)
+
+            if self.connection.socket:
+                sockets.append(self.connection.socket)
+
             self.process_sockets(sockets)
 
     def stop(self):
@@ -154,10 +154,10 @@ class PyCatBot(SingleServerIRCBot):
                 self.handle_reciver(sock)
             elif sock is self.listener:
                 self.handle_listener(sock)
-            elif sock in self.sockets:
-                self.handle_irc(sock)
             elif sock in self.processes:
                 self.handle_process(sock)
+            else:
+                self.handle_irc(sock)
 
         self.handle_timeout()
 
