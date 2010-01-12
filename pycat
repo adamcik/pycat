@@ -157,7 +157,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def stop(self):
         if self.connection.is_connected():
-            self.connection.disconnect('Bye :)')
+            self.connection.disconnect('...')
 
         self.listener.close()
 
