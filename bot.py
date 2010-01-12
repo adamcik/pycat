@@ -92,6 +92,9 @@ class PyCatBot(SingleServerIRCBot):
         self.connection.send_raw = throttling
 
     def setup_listener(self):
+        if not self.listen_addr:
+            return
+
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setblocking(0)
         listener.bind(self.listen_addr)
@@ -123,6 +126,9 @@ class PyCatBot(SingleServerIRCBot):
             conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
 
     def on_pubmsg(self, conn, event):
+        if not self.script:
+            return
+
         channel = event.target()
         nick = get_nick(event.source())
         message = self.decode(event.arguments()[0])
