@@ -96,7 +96,7 @@ class PyCatBot(SingleServerIRCBot):
         self.start_listener()
 
     def on_disconnect(self, conn, event):
-        self.stop_listener()
+        self.reset()
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
@@ -251,6 +251,17 @@ class PyCatBot(SingleServerIRCBot):
 
         if time.time() - last > 300:
             self.connection.version()
+
+    def reset(self):
+        self.buffers = {}
+        self.send_buffer = []
+        self.stop_listener()
+
+        while self.recivers:
+            self.recivers.pop().close()
+
+        while self.processes:
+            self.processes.pop().close()
 
     def decode(self, data):
         try:
