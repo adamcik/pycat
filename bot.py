@@ -17,10 +17,11 @@ CHANNEL = '#foo'
 PATTERN = '^[\!\?][^ ]+'
 
 class PyCatBot(SingleServerIRCBot):
-    def __init__(self, server_list, nick, real, channel):
+    def __init__(self, server_list, nick, real, channel, script):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
 
         self.channel = channel
+        self.script = script
 
         self.sockets = []
         self.recivers = []
@@ -86,7 +87,7 @@ class PyCatBot(SingleServerIRCBot):
         nick = get_nick(event.source())
         message = self.decode(event.arguments()[0])
 
-        p = subprocess.Popen(['./test.sh', channel, nick, message],
+        p = subprocess.Popen([self.script, channel, nick, message],
             bufsize=1024, stdout=subprocess.PIPE)
 
         self.processes.append(p.stdout)
@@ -204,7 +205,7 @@ class PyCatBot(SingleServerIRCBot):
             data = data.decode('iso-8859-1')
         return data
 
-pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL)
+pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL, './test.sh')
 
 try:
     pycat.start()
