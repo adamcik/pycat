@@ -251,4 +251,6 @@ pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', '#pycat', './test.sh')
 try:
     pycat.start()
 except KeyboardInterrupt:
-    pycat.stop()
+    pass
+
+pycat.stop()
