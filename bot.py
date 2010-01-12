@@ -44,8 +44,8 @@ class PyCatBot(SingleServerIRCBot):
         self.loggers['reciver'] = logging.getLogger('reciver')
 
         def logger(conn, event):
-            line = u' '.join(event.arguments())
-            self.loggers['irc'].debug(line)
+            args = map(self.decode, event.arguments())
+            self.loggers['irc'].debug(' '.join(args))
 
         self.connection.add_global_handler('all_raw_messages', logger)
 
