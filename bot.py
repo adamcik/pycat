@@ -141,8 +141,7 @@ class PyCatBot(SingleServerIRCBot):
         if self.connection.is_connected():
             self.connection.disconnect('Bye :)')
 
-        if self.listener:
-            self.listener.close()
+        self.stop_listener()
 
         for sock in self.recivers + self.processes:
             sock.close()
