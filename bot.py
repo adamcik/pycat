@@ -165,7 +165,7 @@ class PyCatBot(SingleServerIRCBot):
         peer = sock.getpeername()[0]
         debug = self.loggers['reciver'].debug
 
-        reader = lambda: sock.recv(512)
+        reader = lambda: sock.recv(4096)
         plain_logger = lambda m: debug('%s %s', peer, m)
         close_logger = lambda: debug('%s disconnected', peer)
 
@@ -173,7 +173,7 @@ class PyCatBot(SingleServerIRCBot):
             close_logger)
 
     def handle_process(self, sock):
-        reader = lambda: sock.read(512)
+        reader = lambda: sock.read(4096)
         plain_logger = lambda m: self.loggers['process'].debug(m)
 
         self.handle_generic(sock, reader, self.processes, plain_logger)
