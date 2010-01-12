@@ -89,22 +89,13 @@ class PyCatBot(SingleServerIRCBot):
 
         self.connection.send_raw = throttling
 
-    def get_listener(self, addr=('', 12345)):
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.setblocking(0)
-        listener.bind(addr)
-        listener.listen(5)
-
-        return listener
-
     def on_welcome(self, conn, event):
         conn.join(self.channel)
 
-        self.listener = self.get_listener()
+        self.start_listener()
 
     def on_disconnect(self, conn, event):
-        self.listener.close()
-        self.listener = None
+        self.stop_listener()
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
@@ -238,6 +229,19 @@ class PyCatBot(SingleServerIRCBot):
     def handle_timeout(self):
         self.ircobj.process_timeout()
         self.check_connection()
+
+    def start_listener(self, addr=('', 12345)):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setblocking(0)
+        listener.bind(addr)
+        listener.listen(5)
+
+        self.listener = listener
+
+    def stop_listener(self):
+        if self.listener:
+            self.listener.close()
+            self.listener = None
 
     def check_connection(self):
         if self.last_recv > self.last_send:
