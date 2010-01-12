@@ -5,11 +5,10 @@ import re
 import select
 import socket
 import subprocess
+import sys
 import time
 
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
-
-# FIXME use optparse and/or configreader and/or sys.args
 
 LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
@@ -270,11 +269,29 @@ class PyCatBot(SingleServerIRCBot):
             data = data.decode('iso-8859-1')
         return data
 
-pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', '#pycat', './test.sh')
+def main():
+    if len(sys.argv) != 6:
+        usage()
 
-try:
-    pycat.start()
-except KeyboardInterrupt:
-    pass
+    addr, nick, real, channel, script = sys.argv[1:]
 
-pycat.stop()
+    if ':' in addr:
+        addr = addr.split(':', 1)
+    else:
+        addr = (addr, 6667)
+
+    pycat = PyCatBot([addr], nick, real, channel, script)
+
+    try:
+        pycat.start()
+    except KeyboardInterrupt:
+        pass
+
+    pycat.stop()
+
+def usage():
+    print '%s server[:port] nick realname channel script' % sys.argv[0]
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main()
