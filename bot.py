@@ -23,7 +23,6 @@ class PyCatBot(SingleServerIRCBot):
 
         self.recivers = []
         self.processes = []
-        self.commands = []
         self.buffers = {}
         self.send_buffer = []
         self.loggers = {}
