@@ -10,7 +10,8 @@ from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 
 # FIXME use optparse and/or configreader
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(message)s")
+LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 CHANNEL = '#foo'
 PATTERN = '^[\!\?][^ ]+'
