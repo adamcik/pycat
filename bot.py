@@ -26,6 +26,7 @@ class PyCatBot(SingleServerIRCBot):
         self.recivers = []
         self.processes = []
         self.buffers = {}
+        self.loggers = {}
         self.listener = self.get_listener()
 
         self.last_seen = time.time()
@@ -35,15 +36,19 @@ class PyCatBot(SingleServerIRCBot):
         self.setup_logging()
 
     def setup_logging(self):
+        self.loggers['irc'] = logging.getLogger('irc')
+        self.loggers['process'] = logging.getLogger('process')
+        self.loggers['reciver'] = logging.getLogger('reciver')
+
         orignial_send_raw = self.connection.send_raw
 
         def send_raw(string):
-            logging.debug(string.decode('utf-8'))
+            self.loggers['irc'].debug(string.decode('utf-8'))
             orignial_send_raw(string)
 
         def logger(conn, event):
             line = u' '.join(event.arguments())
-            logging.debug(line)
+            self.loggers['irc'].debug(line)
 
         self.connection.add_global_handler('all_raw_messages', logger)
         self.connection.send_raw = send_raw
@@ -127,6 +132,7 @@ class PyCatBot(SingleServerIRCBot):
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
 
+            self.loggers['process'].debug(message)
             self.handle_reciver_message(message)
 
         if len(data) == 0:
@@ -141,7 +147,7 @@ class PyCatBot(SingleServerIRCBot):
 
         if len(data) == 0:
             self.recivers.remove(sock)
-            logging.debug('%s disconnected', peer)
+            self.loggers['reciver'].debug('%s disconnected', peer)
             sock.close()
         else:
             self.buffers[sock] += self.decode(data)
@@ -150,8 +156,8 @@ class PyCatBot(SingleServerIRCBot):
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
 
+            self.loggers['reciver'].debug('%s %s', peer, message)
             self.handle_reciver_message(message)
-            logging.debug('%s %s', peer, message)
 
         if len(data) == 0:
             del self.buffers[sock]
@@ -170,7 +176,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
-        logging.debug('%s connected', addr[0])
+        self.loggers['reciver'].debug('%s connected', addr[0])
         self.recivers.append(conn)
 
     def handle_irc(self, sock):
