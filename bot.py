@@ -228,7 +228,6 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
-        self.check_connection()
 
     def start_listener(self):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -242,15 +241,6 @@ class PyCatBot(SingleServerIRCBot):
         if self.listener:
             self.listener.close()
             self.listener = None
-
-    def check_connection(self):
-        if self.last_recv > self.last_send:
-            last = self.last_recv
-        else:
-            last = self.last_send
-
-        if time.time() - last > 300:
-            self.connection.version()
 
     def reset(self):
         self.buffers = {}
