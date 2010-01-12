@@ -13,9 +13,6 @@ from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
-CHANNEL = '#foo'
-PATTERN = '^[\!\?][^ ]+'
-
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel, script):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
@@ -205,7 +202,7 @@ class PyCatBot(SingleServerIRCBot):
             data = data.decode('iso-8859-1')
         return data
 
-pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', CHANNEL, './test.sh')
+pycat = PyCatBot([('localhost', 6667)], 'pycat', 'pycat', '#pycat', './test.sh')
 
 try:
     pycat.start()
