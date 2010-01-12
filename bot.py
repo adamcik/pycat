@@ -19,6 +19,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.channel = channel
         self.script = script
+        self.listen_addr = ('', 12345)
 
         self.recivers = []
         self.processes = []
@@ -229,10 +230,10 @@ class PyCatBot(SingleServerIRCBot):
         self.ircobj.process_timeout()
         self.check_connection()
 
-    def start_listener(self, addr=('', 12345)):
+    def start_listener(self):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setblocking(0)
-        listener.bind(addr)
+        listener.bind(self.listen_addr)
         listener.listen(5)
 
         self.listener = listener
