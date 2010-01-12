@@ -137,7 +137,7 @@ class PyCatBot(SingleServerIRCBot):
             self.buffers[sock] = trailing
 
             self.loggers['process'].debug(message)
-            self.handle_reciver_message(message)
+            self.send_message(message)
 
         if len(data) == 0:
             del self.buffers[sock]
@@ -161,12 +161,12 @@ class PyCatBot(SingleServerIRCBot):
             self.buffers[sock] = trailing
 
             self.loggers['reciver'].debug('%s %s', peer, message)
-            self.handle_reciver_message(message)
+            self.send_message(message)
 
         if len(data) == 0:
             del self.buffers[sock]
 
-    def handle_reciver_message(self, message):
+    def send_message(self, message):
         message = message.encode('utf-8')
 
         if not message.strip() or not self.connection.is_connected():
