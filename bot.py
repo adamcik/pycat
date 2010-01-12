@@ -251,14 +251,16 @@ def main():
     if len(sys.argv) != 6:
         usage()
 
-    addr, nick, real, channel, script = sys.argv[1:]
+    raw_servers, nick, real, channel, script = sys.argv[1:]
+    servers = []
 
-    if ':' in addr:
-        addr = addr.split(':', 1)
-    else:
-        addr = (addr, 6667)
+    for addr in raw_servers.split(','):
+        if ':' in addr:
+            servers.append(addr.split(':', 1))
+        else:
+            servers.append([addr, 6667])
 
-    pycat = PyCatBot([addr], nick, real, channel, script)
+    pycat = PyCatBot(servers, nick, real, channel, script)
 
     try:
         pycat.start()
@@ -268,7 +270,7 @@ def main():
     pycat.stop()
 
 def usage():
-    print '%s server[:port] nick realname channel script' % sys.argv[0]
+    print '%s server[:port][,server2[:port]] nick realname channel script' % sys.argv[0]
     sys.exit(0)
 
 if __name__ == '__main__':
