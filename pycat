@@ -130,12 +130,13 @@ class PyCatBot(SingleServerIRCBot):
         if not self.script:
             return
 
+        nick = self.connection.get_nickname()
         channel = event.target()
-        nick = get_nick(event.source())
+        source= get_nick(event.source())
         message = self.decode(event.arguments()[0])
 
         try:
-            p = subprocess.Popen([self.script, channel, nick, message],
+            p = subprocess.Popen([self.script, nick, channel, source, message],
                 bufsize=1024, stdout=subprocess.PIPE)
             self.processes.append(p.stdout)
         except OSError, e:

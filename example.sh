@@ -1,7 +1,8 @@
 #!/bin/sh
 
-channel=$1
-nick=$2
-message=$3
+nick=$1
+channel=$2
+source=$3
+message=$4
 
-echo "Hello $nick! We are talking in $channel and you said '$3' to me."
+echo "Hello $source! My name is $nick. We are talking in $channel and you said '$message'"
