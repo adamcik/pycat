@@ -103,7 +103,7 @@ class PyCatBot(SingleServerIRCBot):
         conn.join(self.channel)
 
     def on_disconnect(self, conn, event):
-        self.reset()
+        self.send_buffer = []
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
@@ -239,16 +239,6 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
-
-    def reset(self):
-        self.buffers = {}
-        self.send_buffer = []
-
-        while self.recivers:
-            self.recivers.pop().close()
-
-        while self.processes:
-            self.processes.pop().close()
 
     def decode(self, data):
         try:
