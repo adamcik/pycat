@@ -268,15 +268,15 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    raw_servers, nickname, channel = args
-    servers = []
+    servers, nickname, channel = args
+    server_list = []
 
-    for addr in raw_servers.split(','):
+    for addr in servers.split(','):
         if addr and ':' in addr:
             host, port = addr.split(':', 1)
-            servers.append((host, int(port)))
+            server_list.append((host, int(port)))
         else:
-            servers.append((addr, 6667))
+            server_list.append((addr, 6667))
 
     if options.listen and ':' in options.listen:
         host, port = options.listen.split(':', 1)
@@ -284,10 +284,8 @@ def main():
     else:
         listen = None
 
-    realname = options.realname or nickname
-    executable = options.executable
-
-    pycat = PyCatBot(servers, nickname, realname, channel, listen, executable)
+    pycat = PyCatBot(server_list, nickname, options.realname or nickname, channel,
+        listen, options.executable)
 
     try:
         pycat.start()
