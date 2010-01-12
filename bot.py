@@ -120,47 +120,45 @@ class PyCatBot(SingleServerIRCBot):
 
         self.handle_timeout()
 
-    def handle_process(self, sock):
-        if sock not in self.buffers:
-            self.buffers[sock] = u''
-
-        data = sock.read(512)
-
-        if len(data) == 0:
-            self.processes.remove(sock)
-            sock.close()
-        else:
-            self.buffers[sock] += self.decode(data)
-
-        while '\n' in self.buffers[sock]:
-            message, trailing = self.buffers[sock].split('\n', 1)
-            self.buffers[sock] = trailing
-
-            self.loggers['process'].debug(message)
-            self.send_message(message)
-
-        if len(data) == 0:
-            del self.buffers[sock]
-
     def handle_reciver(self, sock):
+        peer = sock.getpeername()[0]
+        debug = self.loggers['reciver'].debug
+
+        reader = lambda: sock.recv(512)
+        plain_logger = lambda m: debug('%s %s', peer, m)
+        close_logger = lambda: debug('%s disconnected', peer)
+
+        self.handle_generic(sock, reader, self.recivers, plain_logger,
+            close_logger)
+
+    def handle_process(self, sock):
+        reader = lambda: sock.read(512)
+        plain_logger = lambda m: self.loggers['process'].debug(m)
+
+        self.handle_generic(sock, reader, self.processes, plain_logger)
+
+    def handle_generic(self, sock, reader, sockets, plain_logger=None,
+            close_logger=None):
+
         if sock not in self.buffers:
             self.buffers[sock] = u''
-
-        data = sock.recv(512)
-        peer = sock.getpeername()[0]
+        
+        data = reader()
 
         if len(data) == 0:
-            self.recivers.remove(sock)
-            self.loggers['reciver'].debug('%s disconnected', peer)
+            if close_logger:
+                close_logger()
+            sockets.remove(sock)
             sock.close()
         else:
             self.buffers[sock] += self.decode(data)
-
+            
         while '\n' in self.buffers[sock]:
             message, trailing = self.buffers[sock].split('\n', 1)
             self.buffers[sock] = trailing
 
-            self.loggers['reciver'].debug('%s %s', peer, message)
+            if plain_logger:
+                plain_logger(message)
             self.send_message(message)
 
         if len(data) == 0:
