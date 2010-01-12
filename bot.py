@@ -36,6 +36,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.setup_logging()
         self.setup_throttling()
+        self.setup_listener()
 
     def setup_logging(self):
         self.loggers['irc'] = logging.getLogger('irc')
@@ -90,10 +91,16 @@ class PyCatBot(SingleServerIRCBot):
 
         self.connection.send_raw = throttling
 
+    def setup_listener(self):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setblocking(0)
+        listener.bind(self.listen_addr)
+        listener.listen(5)
+
+        self.listener = listener
+
     def on_welcome(self, conn, event):
         conn.join(self.channel)
-
-        self.start_listener()
 
     def on_disconnect(self, conn, event):
         self.reset()
@@ -143,7 +150,7 @@ class PyCatBot(SingleServerIRCBot):
         if self.connection.is_connected():
             self.connection.disconnect('Bye :)')
 
-        self.stop_listener()
+        self.listener.close()
 
         for sock in self.recivers + self.processes:
             sock.close()
@@ -229,23 +236,9 @@ class PyCatBot(SingleServerIRCBot):
     def handle_timeout(self):
         self.ircobj.process_timeout()
 
-    def start_listener(self):
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.setblocking(0)
-        listener.bind(self.listen_addr)
-        listener.listen(5)
-
-        self.listener = listener
-
-    def stop_listener(self):
-        if self.listener:
-            self.listener.close()
-            self.listener = None
-
     def reset(self):
         self.buffers = {}
         self.send_buffer = []
-        self.stop_listener()
 
         while self.recivers:
             self.recivers.pop().close()
