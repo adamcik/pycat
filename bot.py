@@ -14,7 +14,7 @@ LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 class PyCatBot(SingleServerIRCBot):
-    def __init__(self, server_list, listen_addr, nick, real, channel, script):
+    def __init__(self, server_list, nick, real, channel, listen_addr=None, script=None):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
 
         self.channel = channel
@@ -263,7 +263,7 @@ def main():
     listen = listen.split(':', 1)
     listen[1] = int(listen[1])
 
-    pycat = PyCatBot(servers, listen, nick, real, channel, script)
+    pycat = PyCatBot(servers, nick, real, channel, listen, script)
 
     try:
         pycat.start()
