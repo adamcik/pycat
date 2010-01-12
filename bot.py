@@ -14,12 +14,12 @@ LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 class PyCatBot(SingleServerIRCBot):
-    def __init__(self, server_list, nick, real, channel, script):
+    def __init__(self, server_list, listen_addr, nick, real, channel, script):
         SingleServerIRCBot.__init__(self, server_list, nick, real)
 
         self.channel = channel
         self.script = script
-        self.listen_addr = ('', 12345)
+        self.listen_addr = tuple(listen_addr)
 
         self.recivers = []
         self.processes = []
@@ -248,10 +248,10 @@ class PyCatBot(SingleServerIRCBot):
         return data
 
 def main():
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         usage()
 
-    raw_servers, nick, real, channel, script = sys.argv[1:]
+    raw_servers, listen, nick, real, channel, script = sys.argv[1:]
     servers = []
 
     for addr in raw_servers.split(','):
@@ -260,7 +260,10 @@ def main():
         else:
             servers.append([addr, 6667])
 
-    pycat = PyCatBot(servers, nick, real, channel, script)
+    listen = listen.split(':', 1)
+    listen[1] = int(listen[1])
+
+    pycat = PyCatBot(servers, listen, nick, real, channel, script)
 
     try:
         pycat.start()
@@ -270,7 +273,7 @@ def main():
     pycat.stop()
 
 def usage():
-    print '%s server[:port][,server2[:port]] nick realname channel script' % sys.argv[0]
+    print '%s server[:port][,server2[:port]] [interface]:port nick realname channel script' % sys.argv[0]
     sys.exit(0)
 
 if __name__ == '__main__':
