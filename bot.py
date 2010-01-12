@@ -28,7 +28,7 @@ class PyCatBot(SingleServerIRCBot):
         self.send_buffer = []
         self.loggers = {}
 
-        self.listener = self.get_listener()
+        self.listener = None
 
         self.last_send = time.time()
         self.last_recv = time.time()
@@ -100,6 +100,12 @@ class PyCatBot(SingleServerIRCBot):
     def on_welcome(self, conn, event):
         conn.join(self.channel)
 
+        self.listener = self.get_listener()
+
+    def on_disconnect(self, conn, event):
+        self.listener.close()
+        self.listener = None
+
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
 
@@ -132,7 +138,9 @@ class PyCatBot(SingleServerIRCBot):
 
         while 1:
             sockets = self.processes + self.recivers
-            sockets.append(self.listener)
+
+            if self.listener:
+                sockets.append(self.listener)
 
             if self.connection.socket:
                 sockets.append(self.connection.socket)
@@ -143,7 +151,8 @@ class PyCatBot(SingleServerIRCBot):
         if self.connection.is_connected():
             self.connection.disconnect('Bye :)')
 
-        self.listener.close()
+        if self.listener:
+            self.listener.close()
 
         for sock in self.recivers + self.processes:
             sock.close()
