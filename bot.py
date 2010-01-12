@@ -171,11 +171,11 @@ class PyCatBot(SingleServerIRCBot):
         if not message.strip() or not self.connection.is_connected():
             return
         elif message.startswith('/me '):
-            self.connection.action(CHANNEL, message[len('/me '):])
+            self.connection.action(self.channel, message[len('/me '):])
         elif message.startswith('/notice '):
-            self.connection.notice(CHANNEL, message[len('/notice '):])
+            self.connection.notice(self.channel, message[len('/notice '):])
         else:
-            self.connection.privmsg(CHANNEL, message)
+            self.connection.privmsg(self.channel, message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
