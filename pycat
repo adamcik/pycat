@@ -34,7 +34,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.last_send = time.time()
         self.last_recv = time.time()
-        self.send_frequency = 2
+        self.send_frequency = 2.5
         self.send_scheduled = False
 
         self.setup_logging()
