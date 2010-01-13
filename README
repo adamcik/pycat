@@ -47,8 +47,13 @@ path with:
 Any data written back to STDOUT will be sent to the channel. See example.sh for
 a simple hello world script.
 
+License
+-------
+
+pyCAT is released under the MIT license, see COPYING.
+
 Inspiration
 -----------
 
-There is no hidding the fact that this project is inspired by irccat
+There is no hiding the fact that this project is inspired by irccat
 (http://github.com/RJ/irccat).
