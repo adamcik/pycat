@@ -24,7 +24,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.recivers = []
         self.processes = []
-        self.buffers = {}
+        self.recv_buffers = {}
         self.send_buffer = []
         self.loggers = {}
 
@@ -202,8 +202,8 @@ class PyCatBot(SingleServerIRCBot):
     def handle_generic(self, sock, reader, sockets, plain_logger=None,
             close_logger=None):
 
-        if sock not in self.buffers:
-            self.buffers[sock] = u''
+        if sock not in self.recv_buffers:
+            self.recv_buffers[sock] = u''
 
         data = reader()
 
@@ -213,18 +213,18 @@ class PyCatBot(SingleServerIRCBot):
             sockets.remove(sock)
             sock.close()
         else:
-            self.buffers[sock] += self.decode(data)
+            self.recv_buffers[sock] += self.decode(data)
 
-        while '\n' in self.buffers[sock]:
-            message, trailing = self.buffers[sock].split('\n', 1)
-            self.buffers[sock] = trailing
+        while '\n' in self.recv_buffers[sock]:
+            message, trailing = self.recv_buffers[sock].split('\n', 1)
+            self.recv_buffers[sock] = trailing
 
             if plain_logger:
                 plain_logger(message)
             self.send_message(message)
 
         if len(data) == 0:
-            del self.buffers[sock]
+            del self.recv_buffers[sock]
 
     def send_message(self, message):
         if not message.strip():
