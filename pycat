@@ -279,10 +279,12 @@ class PyCatBot(SingleServerIRCBot):
         return data
 
 def main():
-    usage = '''usage: %prog server[:port][,server[:port]] nickname channel [options]
-examples:
-    %prog irc.efnet.net cat #norge --realname='Majo Nes' --script=/foo/bar
-    %prog eu.irc6.net,irc.hitos.no,irc.pvv.org:6668 cat #pycat --listen=80'''
+    usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
+Examples:
+  Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
+    %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
+  Use fallbacks on IRCnet, nick cat, channel pycat, listen on port 80:
+    %prog irc.hitos.no,irc.pvv.org:6668 cat '#pycat' --listen=80'''
 
     parser = OptionParser(usage=usage)
     parser.add_option('--listen', metavar='[addr]:port',
@@ -299,6 +301,10 @@ examples:
         sys.exit(0)
 
     servers, nickname, channel = args
+
+    if not channel.startswith('#'):
+        channel = '#' + channel
+
     server_list = []
 
     for addr in servers.split(','):
