@@ -284,7 +284,7 @@ def main():
             try:
                 server_list.append((host, int(port)))
             except ValueError:
-                parser.error('-s got an invalid port number')
+                parser.error('server argument got an invalid port number')
         else:
             server_list.append((addr, 6667))
 
