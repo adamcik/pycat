@@ -17,9 +17,11 @@ LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 class PyCatBot(SingleServerIRCBot):
-    def __init__(self, server_list, nick, real, channel, listen_addr=None, script=None):
-        SingleServerIRCBot.__init__(self, server_list, nick, real)
+    def __init__(self, server_list, nick, real, channel,
+                 listen_addr=None, script=None):
 
+        SingleServerIRCBot.__init__(self, server_list, nick, real,
+                                    reconnection_interval=30)
         self.channel = channel
         self.script = script
         self.listen_addr = listen_addr
@@ -167,7 +169,8 @@ class PyCatBot(SingleServerIRCBot):
         self.on_pubmsg(conn, event)
 
     def start(self):
-        self._connect()
+        if not self._connect():
+            return
 
         while 1:
             sockets = self.processes + self.recivers
