@@ -274,7 +274,7 @@ class PyCatBot(SingleServerIRCBot):
         if not message.strip():
             return
         elif self.channel not in self.channels:
-            self.loggers['irc'].debug('Discarding message: %s', message)
+            self.loggers['irc'].warning('Bot not in channel, discarding message: %s', message)
             return
 
         message = message.encode('utf-8')
@@ -288,7 +288,7 @@ class PyCatBot(SingleServerIRCBot):
 
         for target in targets:
             if target != self.channel and target not in users:
-                self.loggers['irc'].debug('%s not known, discarding message: %s',
+                self.loggers['irc'].warning('%s not known, discarding message: %s',
                     target, message.decode('utf-8'))
             elif message.startswith('/me '):
                 self.connection.action(target, message[len('/me '):])
