@@ -143,7 +143,7 @@ class PyCatBot(SingleServerIRCBot):
 
         try:
             p = subprocess.Popen([self.script, nick, channel, source, message],
-                bufsize=1024, stdout=subprocess.PIPE)
+                bufsize=4096, stdout=subprocess.PIPE)
             self.processes.append(p.stdout)
         except OSError, e:
             self.loggers['process'].error('Could not start process: %s', e)
