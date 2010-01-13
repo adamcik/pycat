@@ -267,14 +267,18 @@ class PyCatBot(SingleServerIRCBot):
         plain_logger = lambda m: debug('%s %s', peer, m)
         close_logger = lambda: debug('%s disconnected', peer)
 
-        self.handle_generic(sock, reader, self.recivers, plain_logger,
-            close_logger)
+        allowed_targets = [self.channel]
+        allowed_targets.extend(self.channels[self.channel].users())
+
+        self.handle_generic(sock, reader, allowed_targets,
+            plain_logger, close_logger)
 
     def handle_stdout(self, sock):
         reader = lambda: sock.read(4096)
         plain_logger = lambda m: self.loggers['process'].debug(m)
+        allowed_targets = [self.processes_source[sock]]
 
-        self.handle_generic(sock, reader, self.processes_stdout, plain_logger)
+        self.handle_generic(sock, reader, allowed_targets, plain_logger)
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
@@ -286,8 +290,8 @@ class PyCatBot(SingleServerIRCBot):
 
         self.loggers['process'].error(data)
 
-    def handle_generic(self, sock, reader, sockets, plain_logger=None,
-            close_logger=None):
+    def handle_generic(self, sock, reader, allowed_targets,
+            plain_logger=None, close_logger=None):
 
         if sock not in self.recv_buffers:
             self.recv_buffers[sock] = u''
@@ -297,7 +301,13 @@ class PyCatBot(SingleServerIRCBot):
         if len(data) == 0:
             if close_logger:
                 close_logger()
-            sockets.remove(sock)
+
+            if sock in self.processes_stdout:
+                self.processes_stdout.remove(sock)
+                del self.processes_source[sock]
+            elif sock in self.recivers:
+                self.recivers.remove(sock)
+
             sock.close()
         else:
             self.recv_buffers[sock] += self.decode(data)
@@ -308,12 +318,12 @@ class PyCatBot(SingleServerIRCBot):
 
             if plain_logger:
                 plain_logger(message)
-            self.send_message(message)
+            self.send_message(message, allowed_targets)
 
         if len(data) == 0:
             del self.recv_buffers[sock]
 
-    def send_message(self, message):
+    def send_message(self, message, allowed_targets):
         if not message.strip():
             return
         elif self.channel not in self.channels:
