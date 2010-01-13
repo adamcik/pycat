@@ -280,6 +280,7 @@ class PyCatBot(SingleServerIRCBot):
 
 def main():
     usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
+
 Examples:
   Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
     %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
