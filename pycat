@@ -240,9 +240,10 @@ class PyCatBot(SingleServerIRCBot):
         target = self.channel
 
         if message[0] == '@':
-            nick, message = message[1:].split(' ', 1)
-            if nick in self.channels[self.channel].users():
-                target = nick
+            target, message = message[1:].split(' ', 1)
+            if target not in self.channels[self.channel].users():
+                self.loggers['irc'].debug('User %s not in channel discarding message: %s', target, message)
+                return
 
         if message.startswith('/me '):
             self.connection.action(target, message[len('/me '):])
