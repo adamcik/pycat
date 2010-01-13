@@ -37,7 +37,8 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.recivers = []
-        self.processes = []
+        self.processes_stdout = []
+        self.processes_stderr = []
         self.recv_buffers = {}
         self.send_buffer = []
         self.loggers = {}
@@ -187,8 +188,9 @@ class PyCatBot(SingleServerIRCBot):
 
         try:
             p = subprocess.Popen([self.script, nick, channel, source, message],
-                bufsize=4096, stdout=subprocess.PIPE)
-            self.processes.append(p.stdout)
+                bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.processes_stdout.append(p.stdout)
+            self.processes_stderr.append(p.stderr)
         except OSError, e:
             self.loggers['process'].error('Could not start process: %s', e)
 
@@ -207,7 +209,8 @@ class PyCatBot(SingleServerIRCBot):
         self.running = True
 
         while self.running:
-            sockets = self.processes + self.recivers
+            sockets = self.processes_stdout + self.processes_stderr + \
+                self.recivers
 
             if self.listener:
                 sockets.append(self.listener)
@@ -224,7 +227,7 @@ class PyCatBot(SingleServerIRCBot):
         if self.listener:
             self.listener.close()
 
-        for sock in self.recivers + self.processes:
+        for sock in self.recivers + self.processes_stdout + self.processes_stderr:
             sock.close()
 
     def process_sockets(self, sockets):
@@ -233,8 +236,10 @@ class PyCatBot(SingleServerIRCBot):
                 self.handle_reciver(sock)
             elif sock is self.listener:
                 self.handle_listener(sock)
-            elif sock in self.processes:
-                self.handle_process(sock)
+            elif sock in self.processes_stdout:
+                self.handle_stdout(sock)
+            elif sock in self.processes_stderr:
+                self.handle_stderr(sock)
             else:
                 self.handle_irc(sock)
 
@@ -251,11 +256,21 @@ class PyCatBot(SingleServerIRCBot):
         self.handle_generic(sock, reader, self.recivers, plain_logger,
             close_logger)
 
-    def handle_process(self, sock):
+    def handle_stdout(self, sock):
         reader = lambda: sock.read(4096)
         plain_logger = lambda m: self.loggers['process'].debug(m)
 
-        self.handle_generic(sock, reader, self.processes, plain_logger)
+        self.handle_generic(sock, reader, self.processes_stdout, plain_logger)
+
+    def handle_stderr(self, sock):
+        data = sock.read(4096)
+
+        if len(data) == 0:
+            self.processes_stderr.remove(sock)
+            sock.close()
+            return
+
+        self.loggers['process'].error(data)
 
     def handle_generic(self, sock, reader, sockets, plain_logger=None,
             close_logger=None):
