@@ -170,7 +170,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def start(self):
         if not self._connect():
-            return
+            self._connected_checker()
 
         while 1:
             sockets = self.processes + self.recivers
