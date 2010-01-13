@@ -204,6 +204,11 @@ class PyCatBot(SingleServerIRCBot):
         self.loggers['main'].error("Invalid nickname '%s', stopping bot.", nick)
         self.running = False
 
+    def on_badchanmask(self, conn, event):
+        channel = self.decode(event.arguments()[0])
+        self.loggers['main'].error("Invalid channel '%s', stopping bot.", channel)
+        self.running = False
+
     def start(self):
         if not self._connect():
             self._connected_checker()
