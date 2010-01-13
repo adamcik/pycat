@@ -246,7 +246,7 @@ class PyCatBot(SingleServerIRCBot):
         if '@' in message.split(' ', 1)[0]:
             targets, message = message.split(' ', 1)
             targets = targets.split(',')
-            targets = map(lambda t: t[1:], targets)
+            targets = map(lambda t: t.lstrip('@'), targets)
 
         for target in targets:
             if target != self.channel and target not in users:
