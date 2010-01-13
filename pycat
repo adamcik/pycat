@@ -46,6 +46,7 @@ class PyCatBot(SingleServerIRCBot):
         self.running = False
 
     def setup_logging(self):
+        self.loggers['main'] = logging.getLogger('main')
         self.loggers['irc'] = logging.getLogger('irc')
         self.loggers['process'] = logging.getLogger('process')
         self.loggers['listener'] = logging.getLogger('listener')
@@ -181,6 +182,8 @@ class PyCatBot(SingleServerIRCBot):
         self.on_pubmsg(conn, event)
 
     def on_erroneusnickname(self, conn, event):
+        nick = self.decode(event.arguments()[0])
+        self.loggers['main'].error("Invalid nickname '%s', stopping bot.", nick)
         self.running = False
 
     def start(self):
