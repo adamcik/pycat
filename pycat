@@ -332,33 +332,29 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         message = message.encode('utf-8')
-        users = self.channels[self.channel].users()
         targets = [self.channel]
+        first = (message+' ').split(' ', 1)[0]
 
-        if '@' in message.split(' ', 1)[0]:
-            parts = message.split(' ')
-
-            targets = parts.pop(0)
-            targets = targets.split(',')
+        if len(allowed_targets) > 1 and ('@' in first or '#' in first):
+            targets = first.split(',')
             targets = map(lambda t: t.lstrip('@'), targets)
-
-            message = ' '.join(parts)
-
-        if not message.strip():
-            self.loggers['irc'].warning('Discarding empty message to: %s',
-                ','.join(targets))
-            return
+            message = (message+' ').split(' ', 1)[1]
 
         def clean(target):
-            if target != self.channel and target not in users:
-                self.loggers['irc'].warning('%s not known, discarding message: %s',
+            if target not in allowed_targets:
+                self.loggers['irc'].warning('Sending to %s not allowed, discarding message: %s',
                     target, message.decode('utf-8'))
                 return False
             return True
 
         targets = filter(clean, targets)
 
-        if message.startswith('/me '):
+        if not targets:
+            pass
+        elif not message.strip():
+            self.loggers['irc'].warning('Discarding empty message to: %s',
+                ','.join(targets))
+        elif message.startswith('/me '):
             for target in targets:
                 self.connection.action(target, message[len('/me '):])
         elif message.startswith('/notice '):
