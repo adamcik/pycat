@@ -14,6 +14,7 @@ Dependencies
 ------------
 
 pyCAT requires Python and irclib.py (http://python-irclib.sourceforge.net/).
+irclib >= 0.4.7 required for IPv6 support.
 
 Running
 -------
