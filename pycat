@@ -115,13 +115,23 @@ class PyCatBot(SingleServerIRCBot):
         server = self.server_list[0][0]
         port = self.server_list[0][1]
 
-        self.loggers['irc'].info('Trying to connect to %s:%s', server, port)
+        try:
+            ip = socket.getaddrinfo(server, 0, socket.AF_UNSPEC,
+                    socket.SOCK_STREAM)[0][4][0]
+        except socket.gaierror, e:
+            self.loggers['irc'].error('getaddrinfo for %s failed', server)
+            return False
+
+        if '.' in ip:
+            ip = '::FFFF:' + ip
+
+        self.loggers['irc'].info('Trying to connect to %s [%s]:%s', server, ip, port)
 
         try:
-            self.connect(server, port, self._nickname,
-                ircname=self._realname)
+            self.connect(ip, port, self._nickname,
+                ircname=self._realname, ipv6=True)
         except ServerConnectionError:
-            self.loggers['irc'].error('Failed to connect to %s:%s', server, port)
+            self.loggers['irc'].error('Failed to connect to %s [%s]:%s', server, ip, port)
             return False
 
         return True
