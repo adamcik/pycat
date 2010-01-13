@@ -1,4 +1,6 @@
 #! /usr/bin/python
+# Copyright (c) 2010 Thomas Kongevold Adamcik
+# Released under MIT license, see COPYING file
 
 import logging
 import re
