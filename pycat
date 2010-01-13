@@ -43,6 +43,8 @@ class PyCatBot(SingleServerIRCBot):
         self.setup_throttling()
         self.setup_listener()
 
+        self.running = False
+
     def setup_logging(self):
         self.loggers['irc'] = logging.getLogger('irc')
         self.loggers['process'] = logging.getLogger('process')
@@ -182,7 +184,9 @@ class PyCatBot(SingleServerIRCBot):
         if not self._connect():
             self._connected_checker()
 
-        while 1:
+        self.running = True
+
+        while self.running:
             sockets = self.processes + self.recivers
 
             if self.listener:
