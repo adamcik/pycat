@@ -36,7 +36,9 @@ and NOTICE commands.
     echo "Hello world" | nc localhost 12345
 
 Will bind port 12345 on all interfaces. Sending messages can easily be achieved
-with netcat.
+with netcat. Messages starting with @ will be interpreted as messages intended
+for the given nick. If the user is not in the same channel as the bot the message
+will be discarded.
 
 Script:
 Starting pycat with --script path instructs the bot to execute the file found at
