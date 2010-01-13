@@ -294,16 +294,23 @@ class PyCatBot(SingleServerIRCBot):
             self.loggers['irc'].warning('Discarding empty message to: %s', ','.join(targets))
             return
 
-        for target in targets:
+        def clean(target):
             if target != self.channel and target not in users:
                 self.loggers['irc'].warning('%s not known, discarding message: %s',
                     target, message.decode('utf-8'))
-            elif message.startswith('/me '):
+                return False
+            return True
+
+        targets = filter(clean, targets)
+
+        if message.startswith('/me '):
+            for target in targets:
                 self.connection.action(target, message[len('/me '):])
-            elif message.startswith('/notice '):
+        elif message.startswith('/notice '):
+            for target in targets:
                 self.connection.notice(target, message[len('/notice '):])
-            else:
-                self.connection.privmsg(target, message)
+        else:
+            self.connection.privmsg_many(targets, message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
