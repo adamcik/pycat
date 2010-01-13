@@ -277,13 +277,19 @@ def main():
     for addr in servers.split(','):
         if addr and ':' in addr:
             host, port = addr.split(':', 1)
-            server_list.append((host, int(port)))
+            try:
+                server_list.append((host, int(port)))
+            except ValueError:
+                parser.error('-s got an invalid port number')
         else:
             server_list.append((addr, 6667))
 
     if options.listen and ':' in options.listen:
         host, port = options.listen.split(':', 1)
-        listen = (host, int(port))
+        try:
+            listen = (host, int(port))
+        except ValueError:
+            parser.error('-l got an invalid port number')
     else:
         listen = None
 
