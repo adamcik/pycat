@@ -282,9 +282,17 @@ class PyCatBot(SingleServerIRCBot):
         targets = [self.channel]
 
         if '@' in message.split(' ', 1)[0]:
-            targets, message = message.split(' ', 1)
+            parts = message.split(' ')
+
+            targets = parts.pop(0)
             targets = targets.split(',')
             targets = map(lambda t: t.lstrip('@'), targets)
+
+            message = ' '.join(parts)
+
+        if not message.strip():
+            self.loggers['irc'].warning('Discarding empty message to: %s', ','.join(targets))
+            return
 
         for target in targets:
             if target != self.channel and target not in users:
