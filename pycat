@@ -37,6 +37,7 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.recivers = []
+        self.processes_source = {}
         self.processes_stdout = []
         self.processes_stderr = []
         self.recv_buffers = {}
@@ -184,13 +185,19 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         nick = conn.get_nickname()
-        channel = event.target()
+        target = event.target()
         source= get_nick(event.source())
         message = self.decode(event.arguments()[0])
 
         try:
-            p = subprocess.Popen([self.script, nick, channel, source, message],
+            p = subprocess.Popen([self.script, nick, target, source, message],
                 bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            if nick == target:
+                self.processes_source[p.stdout] = source
+            else:
+                self.processes_source[p.stdout] = target
+
             self.processes_stdout.append(p.stdout)
             self.processes_stderr.append(p.stderr)
         except OSError, e:
