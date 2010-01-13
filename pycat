@@ -279,7 +279,10 @@ class PyCatBot(SingleServerIRCBot):
         return data
 
 def main():
-    usage = 'usage: %prog server[:port][,server] nickname channel'
+    usage = '''usage: %prog server[:port][,server[:port]] nickname channel [options]
+examples:
+    %prog irc.efnet.net cat #norge --realname='Majo Nes' --script=/foo/bar
+    %prog eu.irc6.net,irc.hitos.no,irc.pvv.org:6668 cat #pycat --listen=80'''
 
     parser = OptionParser(usage=usage)
     parser.add_option('--listen', metavar='[addr]:port',
@@ -313,7 +316,7 @@ def main():
         try:
             listen = (host, int(port))
         except ValueError:
-            parser.error('-l got an invalid port number')
+            parser.error('--listen got an invalid port number')
     else:
         listen = None
 
