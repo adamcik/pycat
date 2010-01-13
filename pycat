@@ -240,20 +240,24 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         message = message.encode('utf-8')
-        target = self.channel
+        users = self.channels[self.channel].users()
+        targets = [self.channel]
 
         if message[0] == '@':
-            target, message = message[1:].split(' ', 1)
-            if target not in self.channels[self.channel].users():
-                self.loggers['irc'].debug('User %s not in channel discarding message: %s', target, message)
-                return
+            targets, message = message.split(' ', 1)
+            targets = targets.split(',')
+            targets = map(lambda t: t[1:], targets)
 
-        if message.startswith('/me '):
-            self.connection.action(target, message[len('/me '):])
-        elif message.startswith('/notice '):
-            self.connection.notice(target, message[len('/notice '):])
-        else:
-            self.connection.privmsg(target, message)
+        for target in targets:
+            if target != self.channel and target not in users:
+                self.loggers['irc'].debug('User %s not in channel discarding message: %s',
+                    target, message.decode('utf-8'))
+            elif message.startswith('/me '):
+                self.connection.action(target, message[len('/me '):])
+            elif message.startswith('/notice '):
+                self.connection.notice(target, message[len('/notice '):])
+            else:
+                self.connection.privmsg(target, message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
