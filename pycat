@@ -180,6 +180,9 @@ class PyCatBot(SingleServerIRCBot):
     def on_privmsg(self, conn, event):
         self.on_pubmsg(conn, event)
 
+    def on_erroneusnickname(self, conn, event):
+        self.running = False
+
     def start(self):
         if not self._connect():
             self._connected_checker()
