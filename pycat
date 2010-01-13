@@ -269,8 +269,8 @@ def main():
         help='address to bind listener to')
     parser.add_option('--realname', metavar='name',
         help='realname to provide to IRC server')
-    parser.add_option('--executable', metavar='path',
-        help='executable to send messages to')
+    parser.add_option('--script', metavar='path',
+        help='script to send messages to')
 
     (options, args) = parser.parse_args()
 
@@ -301,7 +301,7 @@ def main():
         listen = None
 
     pycat = PyCatBot(server_list, nickname, options.realname or nickname, channel,
-        listen, options.executable)
+        listen, options.script)
 
     try:
         pycat.start()
