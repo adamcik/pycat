@@ -10,10 +10,15 @@ import subprocess
 import sys
 import time
 
-from ircbot import SingleServerIRCBot, ServerConnectionError, \
-        parse_channel_modes, nm_to_n as get_nick
-from irclib import VERSION as IRCLIB_VERSION
 from optparse import OptionParser, OptionValueError
+
+try:
+    from ircbot import SingleServerIRCBot, ServerConnectionError, \
+            parse_channel_modes, nm_to_n as get_nick
+    from irclib import VERSION as IRCLIB_VERSION
+except ImportError:
+    print 'irclib required for bot work'
+    sys.exit(1)
 
 LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
