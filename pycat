@@ -11,7 +11,7 @@ import time
 from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
 from optparse import OptionParser, OptionValueError
 
-LOG_FORMAT = "[%(name)7s %(asctime)s] %(message)s"
+LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 class PyCatBot(SingleServerIRCBot):
@@ -42,6 +42,7 @@ class PyCatBot(SingleServerIRCBot):
     def setup_logging(self):
         self.loggers['irc'] = logging.getLogger('irc')
         self.loggers['process'] = logging.getLogger('process')
+        self.loggers['listener'] = logging.getLogger('listener')
         self.loggers['reciver'] = logging.getLogger('reciver')
 
         def logger(conn, event):
@@ -96,12 +97,15 @@ class PyCatBot(SingleServerIRCBot):
         if not self.listen_addr:
             return
 
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.setblocking(0)
-        listener.bind(self.listen_addr)
-        listener.listen(5)
+        try:
+            listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            listener.setblocking(0)
+            listener.bind(self.listen_addr)
+            listener.listen(5)
 
-        self.listener = listener
+            self.listener = listener
+        except socket.gaierror, e:
+            self.loggers['listener'].error('Could not setup listener: %s', e)
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
