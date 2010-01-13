@@ -139,7 +139,8 @@ class PyCatBot(SingleServerIRCBot):
         if '.' in ip:
             ip = '::FFFF:' + ip
 
-        self.loggers['irc'].info('Trying to connect to %s [%s]:%s', server, ip, port)
+        self.loggers['irc'].info('Trying to connect to %s [%s]:%s',
+            server, ip, port)
 
         kwargs = {'ircname': self._realname}
 
@@ -149,7 +150,8 @@ class PyCatBot(SingleServerIRCBot):
         try:
             self.connect(ip, port, self._nickname, **kwargs)
         except ServerConnectionError:
-            self.loggers['irc'].error('Failed to connect to %s [%s]:%s', server, ip, port)
+            self.loggers['irc'].error('Failed to connect to %s [%s]:%s',
+                server, ip, port)
             return False
 
         return True
@@ -209,8 +211,8 @@ class PyCatBot(SingleServerIRCBot):
         self.running = True
 
         while self.running:
-            sockets = self.processes_stdout + self.processes_stderr + \
-                self.recivers
+            sockets = self.processes_stdout + \
+                self.processes_stderr + self.recivers
 
             if self.listener:
                 sockets.append(self.listener)
@@ -303,7 +305,8 @@ class PyCatBot(SingleServerIRCBot):
         if not message.strip():
             return
         elif self.channel not in self.channels:
-            self.loggers['irc'].warning('Bot not in channel, discarding message: %s', message)
+            self.loggers['irc'].warning('Bot not in channel, discarding message: %s',
+                message)
             return
 
         message = message.encode('utf-8')
@@ -320,7 +323,8 @@ class PyCatBot(SingleServerIRCBot):
             message = ' '.join(parts)
 
         if not message.strip():
-            self.loggers['irc'].warning('Discarding empty message to: %s', ','.join(targets))
+            self.loggers['irc'].warning('Discarding empty message to: %s',
+                ','.join(targets))
             return
 
         def clean(target):
