@@ -262,12 +262,15 @@ class PyCatBot(SingleServerIRCBot):
         return data
 
 def main():
-    usage = 'usage: %prog [options] server1[:port][,server2] nickname channel'
+    usage = 'usage: %prog server[:port][,server] nickname channel'
 
     parser = OptionParser(usage=usage)
-    parser.add_option('-l', '--listen')
-    parser.add_option('-r', '--realname')
-    parser.add_option('-e', '--executable')
+    parser.add_option('--listen', metavar='[addr]:port',
+        help='address to bind listener to')
+    parser.add_option('--realname', metavar='name',
+        help='realname to provide to IRC server')
+    parser.add_option('--executable', metavar='path',
+        help='executable to send messages to')
 
     (options, args) = parser.parse_args()
 
