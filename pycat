@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time
 
-from ircbot import SingleServerIRCBot, nm_to_n as get_nick, parse_channel_modes
+from ircbot import SingleServerIRCBot, ServerConnectionError, nm_to_n as get_nick, parse_channel_modes
 from optparse import OptionParser, OptionValueError
 
 LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
@@ -108,6 +108,21 @@ class PyCatBot(SingleServerIRCBot):
             self.listener = listener
         except socket.gaierror, e:
             self.loggers['listener'].error('Could not setup listener: %s', e)
+
+    def _connect(self):
+        server = self.server_list[0][0]
+        port = self.server_list[0][1]
+
+        self.loggers['irc'].info('Trying to connect to %s:%s', server, port)
+
+        try:
+            self.connect(server, port, self._nickname,
+                ircname=self._realname)
+        except ServerConnectionError:
+            self.loggers['irc'].error('Failed to connect to %s:%s', server, port)
+            return False
+
+        return True
 
     def on_welcome(self, conn, event):
         conn.join(self.channel)
