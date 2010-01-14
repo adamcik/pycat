@@ -16,7 +16,7 @@ from ircbot import SingleServerIRCBot, ServerConnectionError, \
         parse_channel_modes, nm_to_n as get_nick
 from irclib import VERSION as IRCLIB_VERSION
 
-LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
+LOG_FORMAT = "[%(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 IRCLIB_SUPPORTS_IPV6 = IRCLIB_VERSION >= (0,4,7)
@@ -34,7 +34,6 @@ class PyCatBot(SingleServerIRCBot):
         self.dispatchers = {}
         self.recv_buffers = {}
         self.send_buffer = []
-        self.loggers = {}
 
         self.last_send = time.time()
         self.last_recv = time.time()
@@ -48,23 +47,17 @@ class PyCatBot(SingleServerIRCBot):
         self.running = False
 
     def setup_logging(self):
-        self.loggers['main'] = logging.getLogger('main')
-        self.loggers['irc'] = logging.getLogger('irc')
-        self.loggers['process'] = logging.getLogger('process')
-        self.loggers['listener'] = logging.getLogger('listener')
-        self.loggers['reciver'] = logging.getLogger('reciver')
-
-        def logger(conn, event):
+        def debug_logger(conn, event):
             args = map(self.decode, event.arguments())
-            self.loggers['irc'].debug(' '.join(args))
+            logging.debug(' '.join(args))
 
-        self.connection.add_global_handler('all_raw_messages', logger)
+        self.connection.add_global_handler('all_raw_messages', debug_logger)
 
     def setup_throttling(self):
         orignial_send_raw = self.connection.send_raw
 
         def send_raw(string):
-            self.loggers['irc'].debug(string.decode('utf-8'))
+            logging.debug(string.decode('utf-8'))
             self.last_send = time.time()
             orignial_send_raw(string)
 
@@ -104,7 +97,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def setup_listener(self):
         if not self.listen_addr:
-            self.loggers['listener'].debug('No listener, stopping listener setup')
+            logging.debug('No listener, stopping listener setup')
             return
 
         try:
@@ -113,11 +106,11 @@ class PyCatBot(SingleServerIRCBot):
             listener.bind(self.listen_addr)
             listener.listen(5)
 
-            self.loggers['listener'].info('Listener set up on %s:%s' % self.listen_addr)
+            logging.info('Listener set up on %s:%s' % self.listen_addr)
 
             self.listener = listener
         except socket.gaierror, e:
-            self.loggers['listener'].error('Could not setup listener: %s', e)
+            logging.error('Could not setup listener: %s', e)
 
     def _connect(self):
         server = self.server_list[0][0]
@@ -127,13 +120,13 @@ class PyCatBot(SingleServerIRCBot):
             ip = socket.getaddrinfo(server, 0, socket.AF_UNSPEC,
                     socket.SOCK_STREAM)[0][4][0]
         except socket.gaierror, e:
-            self.loggers['irc'].error('getaddrinfo for %s failed', server)
+            logging.error('getaddrinfo for %s failed', server)
             return False
 
         if '.' in ip:
             ip = '::FFFF:' + ip
 
-        self.loggers['irc'].info('Trying to connect to %s [%s]:%s',
+        logging.info('Trying to connect to %s [%s]:%s',
             server, ip, port)
 
         kwargs = {'ircname': self._realname}
@@ -145,7 +138,7 @@ class PyCatBot(SingleServerIRCBot):
             self.connect(ip, port, self._nickname, **kwargs)
             self.dispatchers[self.connection.socket] = self.handle_irc
         except ServerConnectionError:
-            self.loggers['irc'].error('Failed to connect to %s [%s]:%s',
+            logging.error('Failed to connect to %s [%s]:%s',
                 server, ip, port)
             return False
 
@@ -195,19 +188,19 @@ class PyCatBot(SingleServerIRCBot):
             self.dispatchers[p.stdout] = lambda s: self.handle_stdout(s, context)
             self.dispatchers[p.stderr] = self.handle_stderr
         except OSError, e:
-            self.loggers['process'].error('Could not start process: %s', e)
+            logging.error('Could not start process: %s', e)
 
     def on_privmsg(self, conn, event):
         self.on_pubmsg(conn, event)
 
     def on_erroneusnickname(self, conn, event):
         nick = self.decode(event.arguments()[0])
-        self.loggers['main'].error("Invalid nickname '%s', stopping bot.", nick)
+        logging.error("Invalid nickname '%s', stopping bot.", nick)
         self.running = False
 
     def on_badchanmask(self, conn, event):
         channel = self.decode(event.arguments()[0])
-        self.loggers['main'].error("Invalid channel '%s', stopping bot.", channel)
+        logging.error("Invalid channel '%s', stopping bot.", channel)
         self.running = False
 
     def start(self):
@@ -234,7 +227,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_reciver(self, sock):
         peer = sock.getpeername()[0]
-        debug = self.loggers['reciver'].debug
+        debug = logging.debug
 
         reader = lambda: sock.recv(4096)
         plain_logger = lambda m: debug('%s %s', peer, m)
@@ -248,7 +241,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_stdout(self, sock, context):
         reader = lambda: sock.read(4096)
-        plain_logger = lambda m: self.loggers['process'].debug(m)
+        plain_logger = lambda m: logging.debug(m)
         allowed_targets = [context]
 
         self.handle_generic(sock, reader, allowed_targets, plain_logger)
@@ -261,7 +254,7 @@ class PyCatBot(SingleServerIRCBot):
             sock.close()
             return
 
-        self.loggers['process'].error(data)
+        logging.error(data)
 
     def handle_generic(self, sock, reader, allowed_targets,
             plain_logger=None, close_logger=None):
@@ -296,7 +289,7 @@ class PyCatBot(SingleServerIRCBot):
         if not message.strip():
             return
         elif self.channel not in self.channels:
-            self.loggers['irc'].warning('Bot not in channel, discarding message: %s',
+            logging.warning('Bot not in channel, discarding message: %s',
                 message)
             return
 
@@ -311,7 +304,7 @@ class PyCatBot(SingleServerIRCBot):
 
         def clean(target):
             if target not in allowed_targets:
-                self.loggers['irc'].warning('Sending to %s not allowed, discarding message: %s',
+                logging.warning('Sending to %s not allowed, discarding message: %s',
                     target, message.decode('utf-8'))
                 return False
             return True
@@ -321,7 +314,7 @@ class PyCatBot(SingleServerIRCBot):
         if not targets:
             pass
         elif not message.strip():
-            self.loggers['irc'].warning('Discarding empty message to: %s',
+            logging.warning('Discarding empty message to: %s',
                 ','.join(targets))
         elif message.startswith('/me '):
             for target in targets:
@@ -334,7 +327,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
-        self.loggers['reciver'].debug('%s connected', addr[0])
+        logging.debug('%s connected', addr[0])
         self.recivers.append(conn)
 
     def handle_irc(self, sock):
