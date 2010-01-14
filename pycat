@@ -33,7 +33,6 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
-        self.processes_source = {}
         self.recv_buffers = {}
         self.send_buffer = []
         self.loggers = {}
@@ -187,12 +186,11 @@ class PyCatBot(SingleServerIRCBot):
                 bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if nick == target:
-                self.processes_source[p.stdout] = source
+                context = source
             else:
-                self.processes_source[p.stdout] = target
+                context = target
 
-            # FIXME generate local function with source in context
-            self.dispatchers[p.stdout] = self.handle_stdout
+            self.dispatchers[p.stdout] = lambda s: self.handle_stdout(s, context)
             self.dispatchers[p.stderr] = self.handle_stderr
         except OSError, e:
             self.loggers['process'].error('Could not start process: %s', e)
@@ -246,10 +244,10 @@ class PyCatBot(SingleServerIRCBot):
         self.handle_generic(sock, reader, allowed_targets,
             plain_logger, close_logger)
 
-    def handle_stdout(self, sock):
+    def handle_stdout(self, sock, context):
         reader = lambda: sock.read(4096)
         plain_logger = lambda m: self.loggers['process'].debug(m)
-        allowed_targets = [self.processes_source[sock]]
+        allowed_targets = [context]
 
         self.handle_generic(sock, reader, allowed_targets, plain_logger)
 
@@ -276,9 +274,6 @@ class PyCatBot(SingleServerIRCBot):
                 close_logger()
 
             del self.dispatchers[sock]
-
-            if sock in self.processes_source:
-                del self.processes_source[sock]
 
             sock.close()
         else:
