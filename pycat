@@ -113,6 +113,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def setup_listener(self):
         if not self.listen_addr:
+            self.loggers['listener'].debug('No listener, stopping listener setup')
             return
 
         try:
@@ -120,6 +121,8 @@ class PyCatBot(SingleServerIRCBot):
             listener.setblocking(0)
             listener.bind(self.listen_addr)
             listener.listen(5)
+
+            self.loggers['listener'].info('Listener set up on %s:%s' % self.listen_addr)
 
             self.listener = listener
         except socket.gaierror, e:
