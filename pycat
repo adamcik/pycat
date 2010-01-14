@@ -22,12 +22,13 @@ logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
-                 listen_addr=None, script=None):
+                 listen_addr=None, script=None, match=None):
 
         SingleServerIRCBot.__init__(self, server_list, nick, real,
                                     reconnection_interval=30)
         self.channel = channel
         self.script = script
+        self.match = match
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
@@ -157,6 +158,9 @@ class PyCatBot(SingleServerIRCBot):
         target = event.target()
         source= get_nick(event.source())
         message = self.decode(event.arguments()[0])
+
+        if self.match and not re.match(self.match, message):
+            return
 
         try:
             process = subprocess.Popen([self.script, nick, target, source, message],
@@ -348,7 +352,9 @@ Examples:
   Use multiple fallbacks on IRCnet, nick cat, channel pycat
     %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
   Connect to irc.freenode.net, listen on port 8000 on a specific interface:
-    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000'''
+    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
+  Connect to localhost, script /foo/bar and send messages that match ^!:
+    %prog localhost cat '#pycat' --script=/foo/bar --match '^!' '''
 
     parser = OptionParser(usage=usage)
     parser.add_option('--listen', metavar='[addr]:port',
@@ -357,6 +363,8 @@ Examples:
         help='realname to provide to IRC server')
     parser.add_option('--script', metavar='path',
         help='script to send messages to')
+    parser.add_option('--match', metavar='regexp', default='.',
+        help='regexp to limit messages sent to script')
 
     (options, args) = parser.parse_args()
 
@@ -390,8 +398,8 @@ Examples:
     else:
         listen = None
 
-    pycat = PyCatBot(server_list, nickname, options.realname or nickname, channel,
-        listen, options.script)
+    pycat = PyCatBot(server_list, nickname, options.realname or nickname,
+        channel, listen, options.script, options.match)
 
     try:
         pycat.start()
