@@ -108,7 +108,8 @@ class PyCatBot(SingleServerIRCBot):
 
             logging.info('Listener set up on %s:%s' % self.listen_addr)
 
-            self.listener = listener
+            self.dispatchers[listener] = self.handle_listener
+
         except socket.gaierror, e:
             logging.error('Could not setup listener: %s', e)
 
@@ -328,7 +329,7 @@ class PyCatBot(SingleServerIRCBot):
     def handle_listener(self, sock):
         conn, addr = sock.accept()
         logging.debug('%s connected', addr[0])
-        self.recivers.append(conn)
+        self.dispatchers[conn] = self.handle_reciver
 
     def handle_irc(self, sock):
         self.ircobj.process_data([sock])
