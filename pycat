@@ -387,8 +387,10 @@ def main():
 Examples:
   Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
     %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
-  Use fallbacks on IRCnet, nick cat, channel pycat, listen on port 80 on all interfaces:
-    %prog irc.hitos.no,irc.pvv.org:6668 cat '#pycat' --listen=:80'''
+  Use multiple fallbacks on IRCnet, nick cat, channel pycat
+    %prog eu.irc6.net,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
+  Connect to irc.freenode.net, listen on port 8000 on a specific interface:
+    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000'''
 
     parser = OptionParser(usage=usage)
     parser.add_option('--listen', metavar='[addr]:port',
