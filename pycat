@@ -23,8 +23,7 @@ except ImportError:
 LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
-IRCLIB_SUPPORTS_IPV6 = (IRCLIB_VERSION[0] >= 0 and
-        IRCLIB_VERSION[1] >= 4 and IRCLIB_VERSION[2] >= 7)
+IRCLIB_SUPPORTS_IPV6 = IRCLIB_VERSION >= (0,4,7)
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
