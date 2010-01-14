@@ -19,8 +19,7 @@ from irclib import VERSION as IRCLIB_VERSION
 LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 
-IRCLIB_SUPPORTS_IPV6 = (IRCLIB_VERSION[0] >= 0 and
-        IRCLIB_VERSION[1] >= 4 and IRCLIB_VERSION[2] >= 7)
+IRCLIB_SUPPORTS_IPV6 = IRCLIB_VERSION >= (0,4,7)
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
@@ -105,6 +104,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def setup_listener(self):
         if not self.listen_addr:
+            self.loggers['listener'].debug('No listener, stopping listener setup')
             return
 
         try:
@@ -112,6 +112,8 @@ class PyCatBot(SingleServerIRCBot):
             listener.setblocking(0)
             listener.bind(self.listen_addr)
             listener.listen(5)
+
+            self.loggers['listener'].info('Listener set up on %s:%s' % self.listen_addr)
 
             self.listener = listener
         except socket.gaierror, e:
@@ -355,8 +357,10 @@ def main():
 Examples:
   Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
     %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
-  Use fallbacks on IRCnet, nick cat, channel pycat, listen on port 80 on all interfaces:
-    %prog irc.hitos.no,irc.pvv.org:6668 cat '#pycat' --listen=:80'''
+  Use multiple fallbacks on IRCnet, nick cat, channel pycat
+    %prog eu.irc6.net,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
+  Connect to irc.freenode.net, listen on port 8000 on a specific interface:
+    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000'''
 
     parser = OptionParser(usage=usage)
     parser.add_option('--listen', metavar='[addr]:port',
