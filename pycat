@@ -3,8 +3,10 @@
 # Released under MIT license, see COPYING file
 
 import logging
+import os
 import re
 import select
+import signal
 import socket
 import subprocess
 import sys
@@ -178,18 +180,21 @@ class PyCatBot(SingleServerIRCBot):
         message = self.decode(event.arguments()[0])
 
         try:
-            p = subprocess.Popen([self.script, nick, target, source, message],
+            process = subprocess.Popen([self.script, nick, target, source, message],
                 bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            if nick == target:
-                context = source
-            else:
-                context = target
-
-            self.dispatchers[p.stdout] = lambda s: self.handle_stdout(s, context)
-            self.dispatchers[p.stderr] = self.handle_stderr
         except OSError, e:
             logging.error('Could not start process: %s', e)
+            return
+
+        if nick == target:
+            context = source
+        else:
+            context = target
+
+        self.dispatchers[process.stdout] = lambda s: self.handle_stdout(s, context)
+        self.dispatchers[process.stderr] = self.handle_stderr
+
+        self.connection.execute_delayed(30, self.handle_hanging_process, [process])
 
     def on_privmsg(self, conn, event):
         self.on_pubmsg(conn, event)
@@ -256,6 +261,12 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         logging.error(data)
+
+    def handle_hanging_process(self, process):
+        if process.poll() is None:
+            logging.error('%s pid:%s taking to long, sending SIGTERM',
+                self.script, process.pid)
+            os.kill(process.pid, signal.SIGTERM)
 
     def handle_generic(self, sock, reader, allowed_targets,
             plain_logger=None, close_logger=None):
