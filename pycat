@@ -32,15 +32,11 @@ class PyCatBot(SingleServerIRCBot):
         self.script = script
         self.listen_addr = listen_addr
 
-        self.recivers = []
+        self.dispatchers = {}
         self.processes_source = {}
-        self.processes_stdout = []
-        self.processes_stderr = []
         self.recv_buffers = {}
         self.send_buffer = []
         self.loggers = {}
-
-        self.listener = None
 
         self.last_send = time.time()
         self.last_recv = time.time()
@@ -146,6 +142,7 @@ class PyCatBot(SingleServerIRCBot):
 
         try:
             self.connect(ip, port, self._nickname, **kwargs)
+            self.dispatchers[self.connection.socket] = self.handle_irc
         except ServerConnectionError:
             self.loggers['irc'].error('Failed to connect to %s [%s]:%s',
                 server, ip, port)
@@ -194,8 +191,9 @@ class PyCatBot(SingleServerIRCBot):
             else:
                 self.processes_source[p.stdout] = target
 
-            self.processes_stdout.append(p.stdout)
-            self.processes_stderr.append(p.stderr)
+            # FIXME generate local function with source in context
+            self.dispatchers[p.stdout] = self.handle_stdout
+            self.dispatchers[p.stderr] = self.handle_stderr
         except OSError, e:
             self.loggers['process'].error('Could not start process: %s', e)
 
@@ -219,41 +217,20 @@ class PyCatBot(SingleServerIRCBot):
         self.running = True
 
         while self.running:
-            sockets = self.processes_stdout + \
-                self.processes_stderr + self.recivers
+            sockets = self.dispatchers.keys()
 
-            if self.listener:
-                sockets.append(self.listener)
+            for sock in select.select(sockets, [], [], 0.2)[0]:
+                self.dispatchers[sock](sock)
 
-            if self.connection.socket:
-                sockets.append(self.connection.socket)
-
-            self.process_sockets(sockets)
+            self.handle_timeout()
 
     def stop(self):
         if self.connection.is_connected():
             self.connection.disconnect('...')
 
-        if self.listener:
-            self.listener.close()
-
-        for sock in self.recivers + self.processes_stdout + self.processes_stderr:
+        for sock in self.dispatchers.keys():
             sock.close()
-
-    def process_sockets(self, sockets):
-        for sock in select.select(sockets, [], [], 0.2)[0]:
-            if sock in self.recivers:
-                self.handle_reciver(sock)
-            elif sock is self.listener:
-                self.handle_listener(sock)
-            elif sock in self.processes_stdout:
-                self.handle_stdout(sock)
-            elif sock in self.processes_stderr:
-                self.handle_stderr(sock)
-            else:
-                self.handle_irc(sock)
-
-        self.handle_timeout()
+            del self.dispatchers[sock]
 
     def handle_reciver(self, sock):
         peer = sock.getpeername()[0]
@@ -280,7 +257,7 @@ class PyCatBot(SingleServerIRCBot):
         data = sock.read(4096)
 
         if len(data) == 0:
-            self.processes_stderr.remove(sock)
+            del self.dispatchers[sock]
             sock.close()
             return
 
@@ -298,11 +275,10 @@ class PyCatBot(SingleServerIRCBot):
             if close_logger:
                 close_logger()
 
-            if sock in self.processes_stdout:
-                self.processes_stdout.remove(sock)
+            del self.dispatchers[sock]
+
+            if sock in self.processes_source:
                 del self.processes_source[sock]
-            elif sock in self.recivers:
-                self.recivers.remove(sock)
 
             sock.close()
         else:
