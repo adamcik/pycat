@@ -35,7 +35,6 @@ class PyCatBot(SingleServerIRCBot):
         self.send_buffer = []
 
         self.last_send = time.time()
-        self.last_recv = time.time()
         self.send_frequency = 2.5
         self.send_scheduled = False
 
@@ -329,7 +328,6 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_irc(self, sock):
         self.ircobj.process_data([sock])
-        self.last_recv = time.time()
 
     def handle_timeout(self):
         self.ircobj.process_timeout()
