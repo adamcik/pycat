@@ -17,7 +17,7 @@ try:
             parse_channel_modes, nm_to_n as get_nick
     from irclib import VERSION as IRCLIB_VERSION
 except ImportError:
-    print 'irclib required for bot work'
+    print 'irclib required for bot work. See http://python-irclib.sf.net/'
     sys.exit(1)
 
 LOG_FORMAT = "[%(name)8s %(asctime)s] %(message)s"
