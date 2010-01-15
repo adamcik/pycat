@@ -315,7 +315,7 @@ class PyCatBot(SingleServerIRCBot):
             self.send_timer = time.time()
 
         if self.send_timer < time.time() + 10:
-            self.send_timer += 2.5
+            self.send_timer += 2
 
             string = self.send_buffer.pop(0)
             logging.debug(string.decode('utf-8'))
