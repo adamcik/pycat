@@ -91,7 +91,8 @@ class PyCatBot(SingleServerIRCBot):
         conn.join(self.channel)
 
     def on_disconnect(self, conn, event):
-        pass
+        message = self.decode(event.arguments()[0])
+        logging.warning('Disconnected from server: %s', message)
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
