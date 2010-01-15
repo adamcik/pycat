@@ -75,6 +75,9 @@ class PyCatBot(SingleServerIRCBot):
         except socket.gaierror, e:
             logging.error('Could not setup listener: %s', e)
 
+    def get_version(self):
+        return 'pycat by Thomas Adamcik - http://github.com/adamcik/pycat'
+
     def _connect(self):
         server = self.server_list[0][0]
         port = self.server_list[0][1]
