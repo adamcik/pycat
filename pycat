@@ -54,6 +54,9 @@ class PyCatBot(SingleServerIRCBot):
         self.send_raw = self.connection.send_raw
         self.connection.send_raw = self.send_buffer.append
 
+    def remove_throttling(self):
+        self.connection.send_raw = self.send_raw
+
     def setup_listener(self):
         if not self.listen_addr:
             logging.debug('No listener, stopping listener setup')
@@ -168,6 +171,8 @@ class PyCatBot(SingleServerIRCBot):
             self.handle_timeout()
 
     def stop(self):
+        self.remove_throttling()
+
         if self.connection.is_connected():
             self.connection.disconnect('...')
 
