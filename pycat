@@ -33,11 +33,9 @@ class PyCatBot(SingleServerIRCBot):
 
         self.dispatchers = {}
         self.recv_buffers = {}
-        self.send_buffer = []
 
-        self.last_send = time.time()
-        self.send_frequency = 2.5
-        self.send_scheduled = False
+        self.send_timer = None
+        self.send_buffer = []
 
         self.setup_logging()
         self.setup_throttling()
@@ -53,46 +51,8 @@ class PyCatBot(SingleServerIRCBot):
         self.connection.add_global_handler('all_raw_messages', debug_logger)
 
     def setup_throttling(self):
-        orignial_send_raw = self.connection.send_raw
-
-        def send_raw(string):
-            logging.debug(string.decode('utf-8'))
-            self.last_send = time.time()
-            orignial_send_raw(string)
-
-        def handle_send_buffer():
-            since_last = time.time() - self.last_send
-
-            if not self.send_buffer:
-                return
-            elif since_last < self.send_frequency:
-                delay = self.send_frequency - since_last
-                self.send_scheduled = True
-                self.connection.execute_delayed(delay, handle_send_buffer)
-                return
-
-            string = self.send_buffer.pop(0)
-
-            send_raw(string)
-
-            if self.send_buffer:
-                self.send_scheduled = True
-                self.connection.execute_delayed(self.send_frequency,
-                    handle_send_buffer)
-            else:
-                self.send_scheduled = False
-
-        def throttling(string):
-            if not re.match('^(PRIVMSG|NOTICE)', string):
-                send_raw(string)
-                return
-
-            self.send_buffer.append(string)
-
-            if not self.send_scheduled:
-                handle_send_buffer()
-
-        self.connection.send_raw = throttling
+        self.send_raw = self.connection.send_raw
+        self.connection.send_raw = self.send_buffer.append
 
     def setup_listener(self):
         if not self.listen_addr:
@@ -131,7 +91,7 @@ class PyCatBot(SingleServerIRCBot):
         conn.join(self.channel)
 
     def on_disconnect(self, conn, event):
-        self.send_buffer = []
+        pass
 
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
@@ -334,7 +294,22 @@ class PyCatBot(SingleServerIRCBot):
         self.ircobj.process_data([sock])
 
     def handle_timeout(self):
+        self.handle_send_buffer()
         self.ircobj.process_timeout()
+
+    def handle_send_buffer(self):
+        if not self.send_buffer:
+            return
+
+        if self.send_timer < time.time():
+            self.send_timer = time.time()
+
+        if self.send_timer < time.time() + 10:
+            self.send_timer += 2.5
+
+            string = self.send_buffer.pop(0)
+            logging.debug(string.decode('utf-8'))
+            self.send_raw(string)
 
     def decode(self, data):
         try:
