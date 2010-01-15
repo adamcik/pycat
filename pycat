@@ -194,7 +194,7 @@ class PyCatBot(SingleServerIRCBot):
         peer = sock.getpeername()[0]
         debug = logging.debug
 
-        data = lambda: sock.recv(4096)
+        data = sock.recv(4096)
         plain_logger = lambda m: debug('%s %s', peer, m)
         close_logger = lambda: debug('%s disconnected', peer)
 
@@ -205,7 +205,7 @@ class PyCatBot(SingleServerIRCBot):
             plain_logger, close_logger)
 
     def handle_stdout(self, sock, context):
-        data = lambda: sock.read(4096)
+        data = sock.read(4096)
         plain_logger = lambda m: logging.debug(m)
         allowed_targets = [context]
 
