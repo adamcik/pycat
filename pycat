@@ -194,22 +194,22 @@ class PyCatBot(SingleServerIRCBot):
         peer = sock.getpeername()[0]
         debug = logging.debug
 
-        reader = lambda: sock.recv(4096)
+        data = lambda: sock.recv(4096)
         plain_logger = lambda m: debug('%s %s', peer, m)
         close_logger = lambda: debug('%s disconnected', peer)
 
         allowed_targets = [self.channel]
         allowed_targets.extend(self.channels[self.channel].users())
 
-        self.handle_generic(sock, reader, allowed_targets,
+        self.handle_generic(sock, data, allowed_targets,
             plain_logger, close_logger)
 
     def handle_stdout(self, sock, context):
-        reader = lambda: sock.read(4096)
+        data = lambda: sock.read(4096)
         plain_logger = lambda m: logging.debug(m)
         allowed_targets = [context]
 
-        self.handle_generic(sock, reader, allowed_targets, plain_logger)
+        self.handle_generic(sock, data, allowed_targets, plain_logger)
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
@@ -227,13 +227,11 @@ class PyCatBot(SingleServerIRCBot):
                 self.script, process.pid)
             os.kill(process.pid, signal.SIGTERM)
 
-    def handle_generic(self, sock, reader, allowed_targets,
+    def handle_generic(self, sock, data, allowed_targets,
             plain_logger=None, close_logger=None):
 
         if sock not in self.recv_buffers:
             self.recv_buffers[sock] = u''
-
-        data = reader()
 
         if len(data) == 0:
             if close_logger:
