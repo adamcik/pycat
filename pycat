@@ -101,6 +101,13 @@ class PyCatBot(SingleServerIRCBot):
         server = self.decode(event.source())
         logging.warning('Disconnected from %s: %s', server, message)
 
+        for sock in self.dispatchers.keys():
+            if self.dispatchers[sock] == self.handle_irc:
+                del self.dispatchers[sock]
+
+        self.send_buffer = []
+        self.connection.send_raw = self.send_buffer.append
+
     def on_nicknameinuse(self, conn, event):
         conn.nick(conn.get_nickname() + '_')
 
