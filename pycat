@@ -158,12 +158,12 @@ class PyCatBot(SingleServerIRCBot):
 
     def on_erroneusnickname(self, conn, event):
         nick = self.decode(event.arguments()[0])
-        logging.error("Invalid nickname '%s', stopping bot.", nick)
+        logging.critical("Invalid nickname '%s', stopping bot.", nick)
         self.running = False
 
     def on_badchanmask(self, conn, event):
         channel = self.decode(event.arguments()[0])
-        logging.error("Invalid channel '%s', stopping bot.", channel)
+        logging.critical("Invalid channel '%s', stopping bot.", channel)
         self.running = False
 
     def start(self):
