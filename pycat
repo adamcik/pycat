@@ -111,6 +111,10 @@ class PyCatBot(SingleServerIRCBot):
     def on_welcome(self, conn, event):
         conn.join(encode(self.channel))
 
+    def on_join(self, conn, event):
+        if get_nick(event.source()) == conn.get_nickname():
+            logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
+
     def on_disconnect(self, conn, event):
         message = decode(event.arguments()[0])
         server = decode(event.source())
@@ -161,7 +165,7 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         args = [self.script, nick, target, source, message]
-        logging.info('Starting: %s %s %s %s %s', *args)
+        logging.debug('Starting: %s %s %s %s %s', *args)
         args = map(encode, args)
 
         try:
@@ -226,6 +230,8 @@ class PyCatBot(SingleServerIRCBot):
             logging.debug('%s %s', peer, line)
 
             targets, message = self.parse_targets(line)
+            logging.info("%s saying '%s' to %s", peer, message,
+                u', '.join(targets))
             self.send_message(message, targets)
 
         if len(data) == 0:
@@ -233,7 +239,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def parse_targets(self, line):
         if encode(self.channel) not in self.channels:
-            return [], message
+            return [], line
 
         allowed_targets = self.channels[encode(self.channel)].users()
         allowed_targets = map(decode, allowed_targets)
@@ -257,7 +263,7 @@ class PyCatBot(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.handle_data(sock, data):
-            logging.debug(line)
+            logging.info("%s saying '%s' to %s", self.script, line, context)
             self.send_message(line, [context])
 
     def handle_stderr(self, sock):
