@@ -176,11 +176,11 @@ class PyCatBot(SingleServerIRCBot):
             return
 
         if nick == target:
-            context = source
+            send_to = source
         else:
-            context = target
+            send_to = target
 
-        self.dispatchers[process.stdout] = lambda s: self.handle_stdout(s, context)
+        self.dispatchers[process.stdout] = lambda s: self.handle_stdout(s, send_to)
         self.dispatchers[process.stderr] = self.handle_stderr
 
         self.connection.execute_delayed(30, self.handle_hanging_process, [process])
@@ -259,12 +259,12 @@ class PyCatBot(SingleServerIRCBot):
 
         return targets, ' '.join(parts)
 
-    def handle_stdout(self, sock, context):
+    def handle_stdout(self, sock, target):
         data = sock.read(4096)
 
         for line in self.handle_data(sock, data):
-            logging.info("%s saying '%s' to %s", self.script, line, context)
-            self.send_message(line, [context])
+            logging.info("%s saying '%s' to %s", self.script, line, target)
+            self.send_message(line, [target])
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
