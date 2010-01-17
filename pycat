@@ -219,35 +219,74 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_reciver(self, sock):
         peer = sock.getpeername()[0]
-
         data = sock.recv(4096)
-        plain_logger = lambda m: logging.debug('%s %s', peer, m)
-        close_logger = lambda: logging.debug('%s disconnected', peer)
 
-        users = self.channels[encode(self.channel)].users()
+        for line in self.handle_data(sock, data):
+            logging.debug('%s %s', peer, line)
 
-        allowed_targets = map(decode, users)
+            targets, message = self.parse_targets(line)
+            self.send_message(message, targets)
+
+        if len(data) == 0:
+            logging.debug('%s disconnected', peer)
+
+    def parse_targets(self, line):
+        if encode(self.channel) not in self.channels:
+            return [], message
+
+        allowed_targets = self.channels[encode(self.channel)].users()
+        allowed_targets = map(decode, allowed_targets)
         allowed_targets.append(self.channel)
 
-        self.handle_generic(sock, data, allowed_targets,
-            plain_logger, close_logger)
+        parts = line.split(' ')
+
+        if len(parts) > 1 and ('@' in parts[0] or '#' in parts[0]):
+            strip = lambda s: s.lstrip('@')
+            allowed = lambda s: s in allowed_targets
+
+            targets = parts.pop(0).split(',')
+            targets = map(strip, targets)
+            targets = filter(allowed, targets)
+        else:
+            targets = [self.channel]
+
+        return targets, ' '.join(parts)
 
     def handle_stdout(self, sock, context):
         data = sock.read(4096)
-        plain_logger = lambda m: logging.debug(m)
-        allowed_targets = [context]
 
-        self.handle_generic(sock, data, allowed_targets, plain_logger)
+        for line in self.handle_data(sock, data):
+            logging.debug(line)
+            self.send_message(line, [context])
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
 
+        for line in self.handle_data(sock, data):
+            logging.error(line)
+
+    def handle_data(self, sock, data):
+        if sock not in self.recv_buffers:
+            self.recv_buffers[sock] = u''
+
+        self.recv_buffers[sock] += decode(data)
+
+        while '\n' in self.recv_buffers[sock]:
+            line, trailing = self.recv_buffers[sock].split('\n', 1)
+            self.recv_buffers[sock] = trailing
+
+            if line:
+                yield line
+
         if len(data) == 0:
+            line = self.recv_buffers[sock]
+
+            del self.recv_buffers[sock]
             del self.dispatchers[sock]
             sock.close()
-            return
 
-        logging.error(decode(data))
+            if line:
+                yield line
 
     def handle_hanging_process(self, process):
         if process.poll() is None:
@@ -255,74 +294,21 @@ class PyCatBot(SingleServerIRCBot):
                 self.script, process.pid)
             os.kill(process.pid, signal.SIGTERM)
 
-    def handle_generic(self, sock, data, allowed_targets,
-            plain_logger=None, close_logger=None):
-
-        if sock not in self.recv_buffers:
-            self.recv_buffers[sock] = u''
-
-        if len(data) == 0:
-            if close_logger:
-                close_logger()
-
-            del self.dispatchers[sock]
-
-            sock.close()
-        else:
-            self.recv_buffers[sock] += decode(data)
-
-        while '\n' in self.recv_buffers[sock]:
-            message, trailing = self.recv_buffers[sock].split('\n', 1)
-            self.recv_buffers[sock] = trailing
-
-            if plain_logger:
-                plain_logger(message)
-            self.send_message(message, allowed_targets)
-
-        if len(data) == 0:
-            del self.recv_buffers[sock]
-
-    def send_message(self, message, allowed_targets):
-        channels = map(decode, self.channels.keys())
+    def send_message(self, message, targets):
+        encoded_targets = map(encode, targets)
+        encoded_message = encode(message)
 
         if not message.strip():
-            return
-        elif self.channel not in channels:
-            logging.warning('Bot not in %s, discarding message: %s',
-                self.channel, message)
-            return
-
-        targets = [self.channel]
-        first = (message+' ').split(' ', 1)[0]
-
-        if len(allowed_targets) > 1 and ('@' in first or '#' in first):
-            targets = first.split(',')
-            targets = map(lambda t: t.lstrip('@'), targets)
-            message = (message+' ').split(' ', 1)[1]
-
-        def clean(target):
-            if target not in allowed_targets:
-                logging.warning('Sending to %s not allowed, discarding message: %s',
-                    target, message)
-                return False
-            return True
-
-        targets = filter(clean, targets)
-        message = encode(message)
-
-        if not targets:
-            pass
-        elif not message.strip():
             logging.warning('Discarding empty message to: %s',
                 ','.join(targets))
         elif message.startswith('/me '):
-            for target in map(encode, targets):
-                self.connection.action(target, message[len('/me '):])
+            for target in encoded_targets:
+                self.connection.action(target, encoded_message[len('/me '):])
         elif message.startswith('/notice '):
-            for target in map(encode, targets):
-                self.connection.notice(target, message[len('/notice '):])
+            for target in encoded_targets:
+                self.connection.notice(target, encoded_message[len('/notice '):])
         else:
-            self.connection.privmsg_many(map(encode, targets), message)
+            self.connection.privmsg_many(map(encode, targets), encoded_message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
