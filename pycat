@@ -159,7 +159,7 @@ class PyCatBot(SingleServerIRCBot):
         peer = sock.getpeername()[0]
         data = sock.recv(4096)
 
-        for line in self.handle_data(sock, data):
+        for line in self.process_data(sock, data):
             logging.debug('%s %s', peer, line)
 
             targets, message = self.parse_targets(line)
@@ -174,14 +174,14 @@ class PyCatBot(SingleServerIRCBot):
     def handle_stdout(self, sock, target):
         data = sock.read(4096)
 
-        for line in self.handle_data(sock, data):
+        for line in self.process_data(sock, data):
             logging.info("%s saying '%s' to %s", self.script, line, target)
             self.send_message(line, [target])
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
 
-        for line in self.handle_data(sock, data):
+        for line in self.process_data(sock, data):
             logging.error(line)
 
     def handle_hanging_process(self, process):
@@ -191,7 +191,7 @@ class PyCatBot(SingleServerIRCBot):
             os.kill(process.pid, signal.SIGTERM)
 
     ## Event loop helper methods ##
-    def handle_data(self, sock, data):
+    def process_data(self, sock, data):
         if sock not in self.recv_buffers:
             self.recv_buffers[sock] = u''
 
