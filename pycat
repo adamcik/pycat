@@ -335,8 +335,6 @@ class PyCatBot(SingleServerIRCBot):
         return string
 
 def main():
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-
     usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
 
 Examples:
@@ -350,6 +348,8 @@ Examples:
     %prog localhost cat '#pycat' --script=/foo/bar --match '^!' '''
 
     parser = OptionParser(usage=usage)
+    parser.add_option('-d', '--debug',  action='store_const',
+        dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('--listen', metavar='[addr]:port',
         help='address to bind listener to')
     parser.add_option('--realname', metavar='name',
@@ -364,6 +364,9 @@ Examples:
     if len(args) != 3:
         parser.print_help()
         sys.exit(0)
+
+    logging.basicConfig(level=options.debug or logging.INFO,
+        format=LOG_FORMAT)
 
     servers, nickname, channel = args
 
