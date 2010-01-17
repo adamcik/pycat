@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ $# -eq 0 ]; then
+    echo match = ^\!
+    exit
+fi
+
 nick=$1
 channel=$2
 source=$3

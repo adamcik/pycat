@@ -36,15 +36,17 @@ def encode(string):
 
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
-                 listen_addr=None, script=None, match=None):
+                 listen_addr=None, script=None):
 
         SingleServerIRCBot.__init__(self, server_list, nick, real,
                                     reconnection_interval=30)
 
         self.channel = decode(channel)
         self.script = decode(script)
-        self.match = decode(match)
         self.listen_addr = listen_addr
+
+        self.match = '^!'
+        self.script_modified = 0
 
         self.dispatchers = {}
         self.irc_socket = None
@@ -130,6 +132,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_timeout(self):
         self.handle_send_buffer()
+        self.handle_match_update()
         self.ircobj.process_timeout()
 
     def handle_send_buffer(self):
@@ -145,6 +148,40 @@ class PyCatBot(SingleServerIRCBot):
             string = self.send_buffer.pop(0)
             logging.debug(decode(string))
             self.send_raw(string)
+
+    def handle_match_update(self):
+        if not self.script:
+            return
+
+        try:
+            last_modified = os.stat(self.script).st_mtime
+        except OSError, e:
+            logging.error('Could not stat %s: %s', self.script, e)
+            return
+
+        if self.script_modified == last_modified:
+            return
+
+        time_since_change = time.time() - last_modified
+
+        if time_since_change < 2:
+            time.sleep(2 - time_since_change)
+
+        logging.debug('Starting: %s', self.script)
+
+        try:
+            process = subprocess.Popen(encode(self.script), bufsize=4096,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            logging.error('Could not start process: %s', e)
+            return
+
+        self.script_modified = last_modified
+
+        self.dispatchers[process.stdout] = self.handle_match
+        self.dispatchers[process.stderr] = self.handle_stderr
+
+        self.connection.execute_delayed(30, self.handle_hanging_process, [process])
 
     # Listener handlers
     def handle_listener(self, sock):
@@ -189,6 +226,19 @@ class PyCatBot(SingleServerIRCBot):
 
         for line in self.process_data(sock, data):
             logging.error(line)
+
+    def handle_match(self, sock):
+        data = sock.read(4096)
+
+        for line in self.process_data(sock, data):
+            match = re.match('^match\s*=\s*(.*)', line)
+
+            if not match:
+                logging.error("Invalid reply from %s: '%s'", self.script, line)
+                continue
+
+            self.match = match.group(1)
+            logging.info("Setting match regexp to '%s'", self.match)
 
     def handle_hanging_process(self, process):
         if process.poll() is None:
@@ -375,9 +425,7 @@ Examples:
   Use multiple fallbacks on IRCnet, nick cat, channel pycat
     %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
   Connect to irc.freenode.net, listen on port 8000 on a specific interface:
-    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
-  Connect to localhost, script /foo/bar and send messages that match ^!:
-    %prog localhost cat '#pycat' --script=/foo/bar --match '^!' '''
+    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000'''
 
     parser = OptionParser(usage=main.__doc__)
     parser.add_option('-d', '--debug',  action='store_const',
@@ -388,8 +436,6 @@ Examples:
         help='realname to provide to IRC server')
     parser.add_option('--script', metavar='path',
         help='script to send messages to')
-    parser.add_option('--match', metavar='regexp', default='^!',
-        help='regexp to limit messages sent to script')
 
     (options, args) = parser.parse_args()
 
@@ -427,7 +473,7 @@ Examples:
         listen = None
 
     pycat = PyCatBot(server_list, nickname, options.realname or nickname,
-        channel, listen, options.script, options.match)
+        channel, listen, options.script)
 
     try:
         pycat.start()
