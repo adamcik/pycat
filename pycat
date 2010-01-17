@@ -158,6 +158,8 @@ class PyCatBot(SingleServerIRCBot):
 
         if self.match_re and not self.match_re.match(message):
             return
+        elif target == nick:
+            return
 
         args = [self.script, nick, target, source, message]
         logging.info('Starting: %s %s %s %s %s', *args)
