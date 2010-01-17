@@ -385,7 +385,7 @@ Examples:
         help='realname to provide to IRC server')
     parser.add_option('--script', metavar='path',
         help='script to send messages to')
-    parser.add_option('--match', metavar='regexp', default='.',
+    parser.add_option('--match', metavar='regexp', default='^!',
         help='regexp to limit messages sent to script')
 
     (options, args) = parser.parse_args()
