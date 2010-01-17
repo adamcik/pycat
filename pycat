@@ -47,6 +47,7 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
+        self.irc_socket = None
 
         self.send_timer = None
         self.send_buffer = []
@@ -342,9 +343,8 @@ class PyCatBot(SingleServerIRCBot):
         server = decode(event.source())
         logging.warning('Disconnected from %s: %s', server, message)
 
-        for sock in self.dispatchers.keys():
-            if self.dispatchers[sock] == self.handle_irc:
-                del self.dispatchers[sock]
+        if self.irc_socket in self.dispatchers:
+            del self.dispatchers[self.irc_socket]
 
         self.send_buffer = []
         self.connection.send_raw = self.send_buffer.append
@@ -359,6 +359,7 @@ class PyCatBot(SingleServerIRCBot):
         try:
             self.connect(server, port, self._nickname, ircname=self._realname)
             self.dispatchers[self.connection.socket] = self.handle_irc
+            self.irc_socket = self.connection.socket
         except ServerConnectionError:
             logging.error('Failed to connect to %s:%s', server, port)
             return False
