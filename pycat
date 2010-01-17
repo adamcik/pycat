@@ -364,7 +364,7 @@ class PyCatBot(SingleServerIRCBot):
         return True
 
 def main():
-    usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
+    '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
 
 Examples:
   Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
@@ -376,7 +376,7 @@ Examples:
   Connect to localhost, script /foo/bar and send messages that match ^!:
     %prog localhost cat '#pycat' --script=/foo/bar --match '^!' '''
 
-    parser = OptionParser(usage=usage)
+    parser = OptionParser(usage=main.__doc__)
     parser.add_option('-d', '--debug',  action='store_const',
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('--listen', metavar='[addr]:port',
