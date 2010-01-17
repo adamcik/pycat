@@ -163,6 +163,10 @@ class PyCatBot(SingleServerIRCBot):
             logging.debug('%s %s', peer, line)
 
             targets, message = self.parse_targets(line)
+
+            if not message:
+                continue
+
             logging.info("%s saying '%s' to %s", peer, message,
                 u', '.join(targets))
             self.send_message(message, targets)
@@ -224,7 +228,7 @@ class PyCatBot(SingleServerIRCBot):
 
         parts = line.split(' ')
 
-        if len(parts) > 1 and ('@' in parts[0] or '#' in parts[0]):
+        if '@' in parts[0] or '#' in parts[0]:
             strip = lambda s: s.lstrip('@')
             allowed = lambda s: s in allowed_targets
 
