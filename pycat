@@ -192,11 +192,10 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_reciver(self, sock):
         peer = sock.getpeername()[0]
-        debug = logging.debug
 
         data = sock.recv(4096)
-        plain_logger = lambda m: debug('%s %s', peer, m)
-        close_logger = lambda: debug('%s disconnected', peer)
+        plain_logger = lambda m: logging.debug('%s %s', peer, m)
+        close_logger = lambda: logging.debug('%s disconnected', peer)
 
         allowed_targets = [self.channel]
         allowed_targets.extend(self.channels[self.channel].users())
