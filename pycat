@@ -58,20 +58,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.running = False
 
-    def setup_logging(self):
-        def debug_logger(conn, event):
-            line = decode(event.arguments()[0])
-            logging.debug(line)
-
-        self.connection.add_global_handler('all_raw_messages', debug_logger)
-
-    def setup_throttling(self):
-        self.send_raw = self.connection.send_raw
-        self.connection.send_raw = self.send_buffer.append
-
-    def remove_throttling(self):
-        self.connection.send_raw = self.send_raw
-
+    ## Init helpers ##
     def setup_listener(self):
         if not self.listen_addr:
             logging.debug('No listener, stopping listener setup')
@@ -90,66 +77,197 @@ class PyCatBot(SingleServerIRCBot):
         except socket.gaierror, e:
             logging.error('Could not setup listener: %s', e)
 
+    def setup_logging(self):
+        def debug_logger(conn, event):
+            line = decode(event.arguments()[0])
+            logging.debug(line)
+
+        self.connection.add_global_handler('all_raw_messages', debug_logger)
+
+    def setup_throttling(self):
+        self.send_raw = self.connection.send_raw
+        self.connection.send_raw = self.send_buffer.append
+
+    def remove_throttling(self):
+        self.connection.send_raw = self.send_raw
+
+    ## Event loop and cleanup code ##
+    def start(self):
+        if not self._connect():
+            self._connected_checker()
+
+        self.running = True
+
+        while self.running:
+            sockets = self.dispatchers.keys()
+
+            for sock in select.select(sockets, [], [], 0.2)[0]:
+                self.dispatchers[sock](sock)
+
+            self.handle_timeout()
+
+    def stop(self):
+        self.remove_throttling()
+
+        if self.connection.is_connected():
+            self.connection.disconnect('...')
+
+        for sock in self.dispatchers.keys():
+            sock.close()
+            del self.dispatchers[sock]
+
+    ## CTCP version reply ##
     def get_version(self):
         return 'pycat by Thomas Adamcik - http://github.com/adamcik/pycat'
 
-    def _connect(self):
-        server = self.server_list[0][0]
-        port = self.server_list[0][1]
+    ##  Event loop handlers ##
 
-        logging.info('Trying to connect to %s:%s', server, port)
+    # IRC handlers
+    def handle_irc(self, sock):
+        self.ircobj.process_data([sock])
 
-        try:
-            self.connect(server, port, self._nickname, ircname=self._realname)
-            self.dispatchers[self.connection.socket] = self.handle_irc
-        except ServerConnectionError:
-            logging.error('Failed to connect to %s:%s', server, port)
-            return False
+    def handle_timeout(self):
+        self.handle_send_buffer()
+        self.ircobj.process_timeout()
 
-        return True
+    def handle_send_buffer(self):
+        if not self.send_buffer:
+            return
 
+        if self.send_timer < time.time():
+            self.send_timer = time.time()
+
+        while self.send_timer < time.time() + 10 and self.send_buffer:
+            self.send_timer += 2
+
+            string = self.send_buffer.pop(0)
+            logging.debug(decode(string))
+            self.send_raw(string)
+
+    # Listener handlers
+    def handle_listener(self, sock):
+        conn, addr = sock.accept()
+        logging.debug('%s connected', addr[0])
+
+        if self.connection.is_connected():
+            self.dispatchers[conn] = self.handle_reciver
+        else:
+            logging.warning('%s disconnected as irc is down', addr[0])
+            conn.close()
+
+    def handle_reciver(self, sock):
+        peer = sock.getpeername()[0]
+        data = sock.recv(4096)
+
+        for line in self.handle_data(sock, data):
+            logging.debug('%s %s', peer, line)
+
+            targets, message = self.parse_targets(line)
+            logging.info("%s saying '%s' to %s", peer, message,
+                u', '.join(targets))
+            self.send_message(message, targets)
+
+        if len(data) == 0:
+            logging.debug('%s disconnected', peer)
+
+    # Process handlers
+    def handle_stdout(self, sock, target):
+        data = sock.read(4096)
+
+        for line in self.handle_data(sock, data):
+            logging.info("%s saying '%s' to %s", self.script, line, target)
+            self.send_message(line, [target])
+
+    def handle_stderr(self, sock):
+        data = sock.read(4096)
+
+        for line in self.handle_data(sock, data):
+            logging.error(line)
+
+    def handle_hanging_process(self, process):
+        if process.poll() is None:
+            logging.error('%s pid:%s taking to long, sending SIGTERM',
+                self.script, process.pid)
+            os.kill(process.pid, signal.SIGTERM)
+
+    ## Event loop helper methods ##
+    def handle_data(self, sock, data):
+        if sock not in self.recv_buffers:
+            self.recv_buffers[sock] = u''
+
+        self.recv_buffers[sock] += decode(data)
+
+        while '\n' in self.recv_buffers[sock]:
+            line, trailing = self.recv_buffers[sock].split('\n', 1)
+            self.recv_buffers[sock] = trailing
+
+            if line:
+                yield line
+
+        if len(data) == 0:
+            line = self.recv_buffers[sock]
+
+            del self.recv_buffers[sock]
+            del self.dispatchers[sock]
+            sock.close()
+
+            if line:
+                yield line
+
+    def parse_targets(self, line):
+        if encode(self.channel) not in self.channels:
+            return [], line
+
+        allowed_targets = self.channels[encode(self.channel)].users()
+        allowed_targets = map(decode, allowed_targets)
+        allowed_targets.append(self.channel)
+
+        parts = line.split(' ')
+
+        if len(parts) > 1 and ('@' in parts[0] or '#' in parts[0]):
+            strip = lambda s: s.lstrip('@')
+            allowed = lambda s: s in allowed_targets
+
+            targets = parts.pop(0).split(',')
+            targets = map(strip, targets)
+            targets = filter(allowed, targets)
+        else:
+            targets = [self.channel]
+
+        return targets, ' '.join(parts)
+
+    def send_message(self, message, targets):
+        encoded_targets = map(encode, targets)
+        encoded_message = encode(message)
+
+        if not message.strip():
+            logging.warning('Discarding empty message to: %s',
+                ','.join(targets))
+        elif message.startswith('/me '):
+            for target in encoded_targets:
+                self.connection.action(target, encoded_message[len('/me '):])
+        elif message.startswith('/notice '):
+            for target in encoded_targets:
+                self.connection.notice(target, encoded_message[len('/notice '):])
+        else:
+            self.connection.privmsg_many(map(encode, targets), encoded_message)
+
+    ## IRC event handlers ##
+
+    # Initial events
     def on_welcome(self, conn, event):
         conn.join(encode(self.channel))
-
-    def on_join(self, conn, event):
-        if get_nick(event.source()) == conn.get_nickname():
-            logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
-
-    def on_disconnect(self, conn, event):
-        message = decode(event.arguments()[0])
-        server = decode(event.source())
-        logging.warning('Disconnected from %s: %s', server, message)
-
-        for sock in self.dispatchers.keys():
-            if self.dispatchers[sock] == self.handle_irc:
-                del self.dispatchers[sock]
-
-        self.send_buffer = []
-        self.connection.send_raw = self.send_buffer.append
 
     def on_nicknameinuse(self, conn, event):
         nick = decode(conn.get_nickname() + '_')
         logging.warning('Changing nick to %s', nick)
         conn.nick(encode(nick))
 
-    def on_invite(self, conn, event):
-        if event.arguments()[0] == self.channel:
-            nick = decode(get_nick(event.source()))
-            logging.info('Joining %s due to invite from %s',
-                self.channel, nick)
-            conn.join(encode(self.channel))
+    def on_join(self, conn, event):
+        if get_nick(event.source()) == conn.get_nickname():
+            logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
 
-    def on_mode(self, conn, event):
-        if event.target() != self.channel:
-            return
-
-        nick = conn.get_nickname()
-        modes = parse_channel_modes(' '.join(event.arguments()))
-
-        if ['+', 'o', nick] in modes:
-            logging.info('%s was oped, Voiceing and deoping', decode(nick))
-            conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
-
+    # Regular events
     def on_pubmsg(self, conn, event):
         if not self.script:
             return
@@ -188,6 +306,25 @@ class PyCatBot(SingleServerIRCBot):
     def on_privmsg(self, conn, event):
         self.on_pubmsg(conn, event)
 
+    def on_mode(self, conn, event):
+        if event.target() != self.channel:
+            return
+
+        nick = conn.get_nickname()
+        modes = parse_channel_modes(' '.join(event.arguments()))
+
+        if ['+', 'o', nick] in modes:
+            logging.info('%s was oped, Voiceing and deoping', decode(nick))
+            conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
+
+    def on_invite(self, conn, event):
+        if event.arguments()[0] == self.channel:
+            nick = decode(get_nick(event.source()))
+            logging.info('Joining %s due to invite from %s',
+                self.channel, nick)
+            conn.join(encode(self.channel))
+
+    # Error events
     def on_erroneusnickname(self, conn, event):
         nick = decode(event.arguments()[0])
         logging.critical("Invalid nickname '%s', stopping bot.", nick)
@@ -198,155 +335,33 @@ class PyCatBot(SingleServerIRCBot):
         logging.critical("Invalid channel '%s', stopping bot.", channel)
         self.running = False
 
-    def start(self):
-        if not self._connect():
-            self._connected_checker()
-
-        self.running = True
-
-        while self.running:
-            sockets = self.dispatchers.keys()
-
-            for sock in select.select(sockets, [], [], 0.2)[0]:
-                self.dispatchers[sock](sock)
-
-            self.handle_timeout()
-
-    def stop(self):
-        self.remove_throttling()
-
-        if self.connection.is_connected():
-            self.connection.disconnect('...')
+    def on_disconnect(self, conn, event):
+        message = decode(event.arguments()[0])
+        server = decode(event.source())
+        logging.warning('Disconnected from %s: %s', server, message)
 
         for sock in self.dispatchers.keys():
-            sock.close()
-            del self.dispatchers[sock]
+            if self.dispatchers[sock] == self.handle_irc:
+                del self.dispatchers[sock]
 
-    def handle_reciver(self, sock):
-        peer = sock.getpeername()[0]
-        data = sock.recv(4096)
+        self.send_buffer = []
+        self.connection.send_raw = self.send_buffer.append
 
-        for line in self.handle_data(sock, data):
-            logging.debug('%s %s', peer, line)
+    ## Custom connect code that overrides irclib ##
+    def _connect(self):
+        server = self.server_list[0][0]
+        port = self.server_list[0][1]
 
-            targets, message = self.parse_targets(line)
-            logging.info("%s saying '%s' to %s", peer, message,
-                u', '.join(targets))
-            self.send_message(message, targets)
+        logging.info('Trying to connect to %s:%s', server, port)
 
-        if len(data) == 0:
-            logging.debug('%s disconnected', peer)
+        try:
+            self.connect(server, port, self._nickname, ircname=self._realname)
+            self.dispatchers[self.connection.socket] = self.handle_irc
+        except ServerConnectionError:
+            logging.error('Failed to connect to %s:%s', server, port)
+            return False
 
-    def parse_targets(self, line):
-        if encode(self.channel) not in self.channels:
-            return [], line
-
-        allowed_targets = self.channels[encode(self.channel)].users()
-        allowed_targets = map(decode, allowed_targets)
-        allowed_targets.append(self.channel)
-
-        parts = line.split(' ')
-
-        if len(parts) > 1 and ('@' in parts[0] or '#' in parts[0]):
-            strip = lambda s: s.lstrip('@')
-            allowed = lambda s: s in allowed_targets
-
-            targets = parts.pop(0).split(',')
-            targets = map(strip, targets)
-            targets = filter(allowed, targets)
-        else:
-            targets = [self.channel]
-
-        return targets, ' '.join(parts)
-
-    def handle_stdout(self, sock, target):
-        data = sock.read(4096)
-
-        for line in self.handle_data(sock, data):
-            logging.info("%s saying '%s' to %s", self.script, line, target)
-            self.send_message(line, [target])
-
-    def handle_stderr(self, sock):
-        data = sock.read(4096)
-
-        for line in self.handle_data(sock, data):
-            logging.error(line)
-
-    def handle_data(self, sock, data):
-        if sock not in self.recv_buffers:
-            self.recv_buffers[sock] = u''
-
-        self.recv_buffers[sock] += decode(data)
-
-        while '\n' in self.recv_buffers[sock]:
-            line, trailing = self.recv_buffers[sock].split('\n', 1)
-            self.recv_buffers[sock] = trailing
-
-            if line:
-                yield line
-
-        if len(data) == 0:
-            line = self.recv_buffers[sock]
-
-            del self.recv_buffers[sock]
-            del self.dispatchers[sock]
-            sock.close()
-
-            if line:
-                yield line
-
-    def handle_hanging_process(self, process):
-        if process.poll() is None:
-            logging.error('%s pid:%s taking to long, sending SIGTERM',
-                self.script, process.pid)
-            os.kill(process.pid, signal.SIGTERM)
-
-    def send_message(self, message, targets):
-        encoded_targets = map(encode, targets)
-        encoded_message = encode(message)
-
-        if not message.strip():
-            logging.warning('Discarding empty message to: %s',
-                ','.join(targets))
-        elif message.startswith('/me '):
-            for target in encoded_targets:
-                self.connection.action(target, encoded_message[len('/me '):])
-        elif message.startswith('/notice '):
-            for target in encoded_targets:
-                self.connection.notice(target, encoded_message[len('/notice '):])
-        else:
-            self.connection.privmsg_many(map(encode, targets), encoded_message)
-
-    def handle_listener(self, sock):
-        conn, addr = sock.accept()
-        logging.debug('%s connected', addr[0])
-
-        if self.connection.is_connected():
-            self.dispatchers[conn] = self.handle_reciver
-        else:
-            logging.warning('%s disconnected as irc is down', addr[0])
-            conn.close()
-
-    def handle_irc(self, sock):
-        self.ircobj.process_data([sock])
-
-    def handle_timeout(self):
-        self.handle_send_buffer()
-        self.ircobj.process_timeout()
-
-    def handle_send_buffer(self):
-        if not self.send_buffer:
-            return
-
-        if self.send_timer < time.time():
-            self.send_timer = time.time()
-
-        while self.send_timer < time.time() + 10 and self.send_buffer:
-            self.send_timer += 2
-
-            string = self.send_buffer.pop(0)
-            logging.debug(decode(string))
-            self.send_raw(string)
+        return True
 
 def main():
     usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
