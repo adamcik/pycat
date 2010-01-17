@@ -47,10 +47,10 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
-        self.recv_buffers = {}
 
         self.send_timer = None
         self.send_buffer = []
+        self.recv_buffers = {}
 
         self.setup_logging()
         self.setup_throttling()
