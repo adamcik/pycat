@@ -61,8 +61,8 @@ class PyCatBot(SingleServerIRCBot):
 
     def setup_logging(self):
         def debug_logger(conn, event):
-            args = map(self.decode, event.arguments())
-            logging.debug(' '.join(args))
+            line = decode(event.arguments()[0])
+            logging.debug(line)
 
         self.connection.add_global_handler('all_raw_messages', debug_logger)
 
@@ -110,11 +110,11 @@ class PyCatBot(SingleServerIRCBot):
         return True
 
     def on_welcome(self, conn, event):
-        conn.join(self.channel)
+        conn.join(encode(self.channel))
 
     def on_disconnect(self, conn, event):
-        message = self.decode(event.arguments()[0])
-        server = self.decode(event.source())
+        message = decode(event.arguments()[0])
+        server = decode(event.source())
         logging.warning('Disconnected from %s: %s', server, message)
 
         for sock in self.dispatchers.keys():
@@ -125,11 +125,16 @@ class PyCatBot(SingleServerIRCBot):
         self.connection.send_raw = self.send_buffer.append
 
     def on_nicknameinuse(self, conn, event):
-        conn.nick(conn.get_nickname() + '_')
+        nick = decode(conn.get_nickname() + '_')
+        logging.warning('Changing nick to %s', nick)
+        conn.nick(encode(nick))
 
     def on_invite(self, conn, event):
         if event.arguments()[0] == self.channel:
-            conn.join(self.channel)
+            nick = decode(get_nick(event.source()))
+            logging.info('Joining %s due to invite from %s',
+                self.channel, nick)
+            conn.join(encode(self.channel))
 
     def on_mode(self, conn, event):
         if event.target() != self.channel:
@@ -139,23 +144,28 @@ class PyCatBot(SingleServerIRCBot):
         modes = parse_channel_modes(' '.join(event.arguments()))
 
         if ['+', 'o', nick] in modes:
+            logging.info('%s was oped, Voiceing and deoping', decode(nick))
             conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
 
     def on_pubmsg(self, conn, event):
         if not self.script:
             return
 
-        nick = conn.get_nickname()
-        target = event.target()
-        source= get_nick(event.source())
-        message = self.decode(event.arguments()[0])
+        nick = decode(conn.get_nickname())
+        target = decode(event.target())
+        source= decode(get_nick(event.source()))
+        message = decode(event.arguments()[0])
 
         if self.match and not re.match(self.match, message):
             return
 
+        args = [self.script, nick, target, source, message]
+        logging.info('Starting: %s %s %s %s %s', *args)
+        args = map(encode, args)
+
         try:
-            process = subprocess.Popen([self.script, nick, target, source, message],
-                bufsize=4096, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(args, bufsize=4096,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
             logging.error('Could not start process: %s', e)
             return
@@ -174,12 +184,12 @@ class PyCatBot(SingleServerIRCBot):
         self.on_pubmsg(conn, event)
 
     def on_erroneusnickname(self, conn, event):
-        nick = self.decode(event.arguments()[0])
+        nick = decode(event.arguments()[0])
         logging.critical("Invalid nickname '%s', stopping bot.", nick)
         self.running = False
 
     def on_badchanmask(self, conn, event):
-        channel = self.decode(event.arguments()[0])
+        channel = decode(event.arguments()[0])
         logging.critical("Invalid channel '%s', stopping bot.", channel)
         self.running = False
 
@@ -214,8 +224,10 @@ class PyCatBot(SingleServerIRCBot):
         plain_logger = lambda m: logging.debug('%s %s', peer, m)
         close_logger = lambda: logging.debug('%s disconnected', peer)
 
-        allowed_targets = [self.channel]
-        allowed_targets.extend(self.channels[self.channel].users())
+        users = self.channels[encode(self.channel)].users()
+
+        allowed_targets = map(decode, users)
+        allowed_targets.append(self.channel)
 
         self.handle_generic(sock, data, allowed_targets,
             plain_logger, close_logger)
@@ -235,7 +247,7 @@ class PyCatBot(SingleServerIRCBot):
             sock.close()
             return
 
-        logging.error(data)
+        logging.error(decode(data))
 
     def handle_hanging_process(self, process):
         if process.poll() is None:
@@ -257,7 +269,7 @@ class PyCatBot(SingleServerIRCBot):
 
             sock.close()
         else:
-            self.recv_buffers[sock] += self.decode(data)
+            self.recv_buffers[sock] += decode(data)
 
         while '\n' in self.recv_buffers[sock]:
             message, trailing = self.recv_buffers[sock].split('\n', 1)
@@ -271,14 +283,15 @@ class PyCatBot(SingleServerIRCBot):
             del self.recv_buffers[sock]
 
     def send_message(self, message, allowed_targets):
+        channels = map(decode, self.channels.keys())
+
         if not message.strip():
             return
-        elif self.channel not in self.channels:
-            logging.warning('Bot not in channel, discarding message: %s',
-                message)
+        elif self.channel not in channels:
+            logging.warning('Bot not in %s, discarding message: %s',
+                self.channel, message)
             return
 
-        message = message.encode('utf-8')
         targets = [self.channel]
         first = (message+' ').split(' ', 1)[0]
 
@@ -290,11 +303,12 @@ class PyCatBot(SingleServerIRCBot):
         def clean(target):
             if target not in allowed_targets:
                 logging.warning('Sending to %s not allowed, discarding message: %s',
-                    target, message.decode('utf-8'))
+                    target, message)
                 return False
             return True
 
         targets = filter(clean, targets)
+        message = encode(message)
 
         if not targets:
             pass
@@ -302,13 +316,13 @@ class PyCatBot(SingleServerIRCBot):
             logging.warning('Discarding empty message to: %s',
                 ','.join(targets))
         elif message.startswith('/me '):
-            for target in targets:
+            for target in map(encode, targets):
                 self.connection.action(target, message[len('/me '):])
         elif message.startswith('/notice '):
-            for target in targets:
+            for target in map(encode, targets):
                 self.connection.notice(target, message[len('/notice '):])
         else:
-            self.connection.privmsg_many(targets, message)
+            self.connection.privmsg_many(map(encode, targets), message)
 
     def handle_listener(self, sock):
         conn, addr = sock.accept()
@@ -338,7 +352,7 @@ class PyCatBot(SingleServerIRCBot):
             self.send_timer += 2
 
             string = self.send_buffer.pop(0)
-            logging.debug(string.decode('utf-8'))
+            logging.debug(decode(string))
             self.send_raw(string)
 
     def decode(self, string):
