@@ -43,7 +43,7 @@ class PyCatBot(SingleServerIRCBot):
 
         self.channel = decode(channel)
         self.script = decode(script)
-        self.match_re = re.compile(decode(match))
+        self.match = decode(match)
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
@@ -280,7 +280,7 @@ class PyCatBot(SingleServerIRCBot):
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
 
-        if self.match_re and not self.match_re.match(message):
+        if self.match and not re.match(self.match, message):
             return
         elif target == nick:
             return
