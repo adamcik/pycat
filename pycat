@@ -19,6 +19,22 @@ from ircbot import SingleServerIRCBot, ServerConnectionError, \
 
 LOG_FORMAT = "[%(asctime)s] %(message)s"
 
+def decode(string):
+    if type(string) is unicode or string is None:
+        return string
+
+    try:
+        string = string.decode('utf-8')
+    except UnicodeDecodeError:
+        string = string.decode('iso-8859-1')
+    return string
+
+def encode(string):
+    if type(string) is not unicode:
+        return string
+
+    return string.encode('utf-8')
+
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
                  listen_addr=None, script=None, match=None):
