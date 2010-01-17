@@ -240,10 +240,7 @@ class PyCatBot(SingleServerIRCBot):
         encoded_targets = map(encode, targets)
         encoded_message = encode(message)
 
-        if not message.strip():
-            logging.warning('Discarding empty message to: %s',
-                ','.join(targets))
-        elif message.startswith('/me '):
+        if message.startswith('/me '):
             for target in encoded_targets:
                 self.connection.action(target, encoded_message[len('/me '):])
         elif message.startswith('/notice '):
