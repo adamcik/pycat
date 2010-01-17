@@ -67,6 +67,7 @@ class PyCatBot(SingleServerIRCBot):
         try:
             listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             listener.setblocking(0)
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listener.bind(self.listen_addr)
             listener.listen(5)
 
