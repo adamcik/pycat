@@ -11,7 +11,7 @@ import socket
 import subprocess
 import time
 
-from optparse import OptionParser, OptionValueError
+from optparse import OptionParser
 
 from ircbot import SingleServerIRCBot, ServerConnectionError, \
         parse_channel_modes, nm_to_n as get_nick
