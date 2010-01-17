@@ -325,6 +325,9 @@ class PyCatBot(SingleServerIRCBot):
             self.send_raw(string)
 
     def decode(self, string):
+        if type(string) is unicode:
+            return string
+
         try:
             string = string.decode('utf-8')
         except UnicodeDecodeError:
