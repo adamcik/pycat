@@ -41,9 +41,10 @@ class PyCatBot(SingleServerIRCBot):
 
         SingleServerIRCBot.__init__(self, server_list, nick, real,
                                     reconnection_interval=30)
-        self.channel = channel
-        self.script = script
-        self.match = match
+
+        self.channel = decode(channel)
+        self.script = decode(script)
+        self.match = decode(match)
         self.listen_addr = listen_addr
 
         self.dispatchers = {}
