@@ -355,16 +355,6 @@ class PyCatBot(SingleServerIRCBot):
             logging.debug(decode(string))
             self.send_raw(string)
 
-    def decode(self, string):
-        if type(string) is unicode:
-            return string
-
-        try:
-            string = string.decode('utf-8')
-        except UnicodeDecodeError:
-            string = string.decode('iso-8859-1')
-        return string
-
 def main():
     usage = '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
 
