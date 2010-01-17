@@ -9,7 +9,6 @@ import select
 import signal
 import socket
 import subprocess
-import sys
 import time
 
 from optparse import OptionParser, OptionValueError
@@ -372,7 +371,7 @@ Examples:
 
     if len(args) != 3:
         parser.print_help()
-        sys.exit(0)
+        return
 
     logging.basicConfig(level=options.debug or logging.INFO,
         format=LOG_FORMAT)
