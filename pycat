@@ -299,7 +299,7 @@ class PyCatBot(SingleServerIRCBot):
             if line:
                 yield line
 
-    def clean_unprintable(self, message):
+    def remove_unprintable(self, message):
         regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
                    '\x03\d\d?(?:,\d\d?)?',          # IRC colors
                    '[\x03\x16\x02\x1f\x0f]')        # AnyEvent::IRC::Util
@@ -367,7 +367,7 @@ class PyCatBot(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
-        message = self.clean_unprintable(message)
+        message = self.remove_unprintable(message)
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
