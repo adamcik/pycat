@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -eq 0 ]; then
-    echo match = ^\!
+    echo 'match = ^!'
     exit
 fi
 

@@ -231,14 +231,19 @@ class PyCatBot(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
-            match = re.match('^match\s*=\s*(.*)', line)
+            match = re.match('^(?P<key>\w+)\s*=\s*(?P<value>.+)', line)
 
             if not match:
                 logging.error("Invalid reply from %s: '%s'", self.script, line)
                 continue
 
-            self.match = match.group(1)
-            logging.info("Setting match regexp to '%s'", self.match)
+            key, value = match.groups()
+
+            if key == 'match': # If this grows a dispatcher table may be better
+                self.match = value
+                logging.info("Setting match regexp to '%s'", value)
+            else:
+                logging.warning("Unknown config key: %s = '%s'", key, value)
 
     def handle_hanging_process(self, process):
         if process.poll() is None:
