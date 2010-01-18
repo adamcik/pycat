@@ -10,6 +10,8 @@ Examples:
     %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
   Use multiple fallbacks on IRCnet, nick cat, channel pycat
     %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
+  Connect to localhost, listen on port 12345 on all interfaces:
+    %prog localhost cat '#pycat' --listen=12345
   Connect to irc.freenode.net, listen on port 8000 on a specific interface:
     %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
 '''
