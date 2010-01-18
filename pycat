@@ -2,6 +2,18 @@
 # Copyright (c) 2010 Thomas Kongevold Adamcik
 # Released under MIT license, see COPYING file
 
+'''
+Usage: %prog server[:port][,server[:port]] nickname channel [options]
+
+Examples:
+  Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
+    %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
+  Use multiple fallbacks on IRCnet, nick cat, channel pycat
+    %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
+  Connect to irc.freenode.net, listen on port 8000 on a specific interface:
+    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
+'''
+
 import logging
 import os
 import re
@@ -415,18 +427,8 @@ class PyCatBot(SingleServerIRCBot):
 
         return True
 
-def main():
-    '''Usage: %prog server[:port][,server[:port]] nickname channel [options]
-
-Examples:
-  Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
-    %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
-  Use multiple fallbacks on IRCnet, nick cat, channel pycat
-    %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
-  Connect to irc.freenode.net, listen on port 8000 on a specific interface:
-    %prog irc.freenode.net cat '#pycat' --listen=example.com:8000'''
-
-    parser = OptionParser(usage=main.__doc__)
+def optparse():
+    parser = OptionParser(usage=__doc__.strip())
     parser.add_option('-d', '--debug',  action='store_const',
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('--listen', metavar='[addr]:port',
@@ -436,6 +438,10 @@ Examples:
     parser.add_option('--script', metavar='path',
         help='script to send messages to')
 
+    return parser
+
+def main():
+    parser = optparse()
     (options, args) = parser.parse_args()
 
     if len(args) != 3:
