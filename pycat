@@ -156,7 +156,7 @@ class PyCatBot(SingleServerIRCBot):
         try:
             last_modified = os.stat(self.script).st_mtime
         except OSError, e:
-            logging.error('Could not stat %s: %s', self.script, e)
+            logging.debug('Could not stat %s: %s', self.script, e)
             return
 
         if self.script_modified == last_modified:
