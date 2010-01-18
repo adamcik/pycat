@@ -99,8 +99,7 @@ class PyCatBot(SingleServerIRCBot):
     def setup_logging(self):
         def debug_logger(conn, event):
             line = decode(event.arguments()[0])
-            logging.debug(line)
-
+            logging.debug(repr(line)[2:-1])
         self.connection.add_global_handler('all_raw_messages', debug_logger)
 
     def setup_throttling(self):
@@ -162,7 +161,7 @@ class PyCatBot(SingleServerIRCBot):
             self.send_timer += 2
 
             string = self.send_buffer.pop(0)
-            logging.debug(decode(string))
+            logging.debug(repr(decode(string))[2:-1])
             self.send_raw(string)
 
     def handle_match_update(self):
