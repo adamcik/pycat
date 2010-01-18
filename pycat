@@ -300,14 +300,11 @@ class PyCatBot(SingleServerIRCBot):
                 yield line
 
     def clean_unprintable(self, message):
-        regexes = (
-                '\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
-                '\x03\d\d?(?:,\d\d?)?',          # IRC colors
-                '[\x03\x16\x02\x1f\x0f]'         # AnyEvent::IRC::Util
-                )
-        for regex in regexes:
-            message = re.sub(regex, '', message)
-        return message
+        regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
+                   '\x03\d\d?(?:,\d\d?)?',          # IRC colors
+                   '[\x03\x16\x02\x1f\x0f]')        # AnyEvent::IRC::Util
+
+        return re.sub('(' + '|'.join(regexes) + ')', '', message)
 
     def parse_targets(self, line):
         if encode(self.channel) not in self.channels:
