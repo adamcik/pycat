@@ -58,12 +58,13 @@ class PyCatBot(SingleServerIRCBot):
         self.listen_addr = listen_addr
 
         self.match = '^!'
+        self.match_timer = 0
         self.script_modified = 0
 
         self.dispatchers = {}
         self.irc_socket = None
 
-        self.send_timer = None
+        self.send_timer = 0
         self.send_buffer = []
         self.recv_buffers = {}
 
@@ -162,8 +163,10 @@ class PyCatBot(SingleServerIRCBot):
             self.send_raw(string)
 
     def handle_match_update(self):
-        if not self.script:
+        if not self.script or self.match_timer > time.time():
             return
+
+        self.match_timer = time.time() + 60
 
         try:
             last_modified = os.stat(self.script).st_mtime
