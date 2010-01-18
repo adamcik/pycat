@@ -311,10 +311,12 @@ class PyCatBot(SingleServerIRCBot):
         parts = line.split(' ')
 
         if '@' in parts[0] or '#' in parts[0]:
+            valid = lambda s: s[0] in '#@'
             strip = lambda s: s.lstrip('@')
             allowed = lambda s: s in allowed_targets
 
             targets = parts.pop(0).split(',')
+            targets = filter(valid, targets)
             targets = map(strip, targets)
             targets = filter(allowed, targets)
         else:
