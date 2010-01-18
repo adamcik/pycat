@@ -361,6 +361,7 @@ class PyCatBot(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
+        message = self.clean_unprintable(message)
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
@@ -388,6 +389,16 @@ class PyCatBot(SingleServerIRCBot):
         if ['+', 'o', nick] in modes:
             logging.info('%s was oped, Voiceing and deoping', decode(nick))
             conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
+
+    def clean_unprintable(self, message):
+        regexes = (
+                '\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
+                '\x03\d\d?(?:,\d\d?)?',          # IRC colors
+                '[\x03\x16\x02\x1f\x0f]'         # AnyEvent::IRC::Util
+                )
+        for regex in regexes:
+            message = re.sub(regex, '', message)
+        return message
 
     def on_invite(self, conn, event):
         if event.arguments()[0] == self.channel:
