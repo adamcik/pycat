@@ -167,21 +167,8 @@ class PyCatBot(SingleServerIRCBot):
         if time_since_change < 2:
             time.sleep(2 - time_since_change)
 
-        logging.debug('Starting: %s', self.script)
-
-        try:
-            process = subprocess.Popen(encode(self.script), bufsize=4096,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
-            logging.error('Could not start process: %s', e)
-            return
-
-        self.script_modified = last_modified
-
-        self.dispatchers[process.stdout] = self.handle_match
-        self.dispatchers[process.stderr] = self.handle_stderr
-
-        self.connection.execute_delayed(30, self.handle_hanging_process, [process])
+        if self.start_process([], self.handle_match):
+            self.script_modified = last_modified
 
     # Listener handlers
     def handle_listener(self, sock):
@@ -252,6 +239,26 @@ class PyCatBot(SingleServerIRCBot):
             os.kill(process.pid, signal.SIGTERM)
 
     ## Event loop helper methods ##
+    def start_process(self, args, handler):
+        args.insert(0, self.script)
+
+        logging.debug('Starting: %s', ' '.join(args))
+        args = map(encode, args)
+
+        try:
+            process = subprocess.Popen(args, bufsize=4096,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            logging.error('Could not start process: %s', e)
+            return False
+
+        self.dispatchers[process.stdout] = handler
+        self.dispatchers[process.stderr] = self.handle_stderr
+
+        self.connection.execute_delayed(30, self.handle_hanging_process, [process])
+
+        return True
+
     def process_data(self, sock, data):
         if sock not in self.recv_buffers:
             self.recv_buffers[sock] = u''
@@ -340,26 +347,13 @@ class PyCatBot(SingleServerIRCBot):
         elif target == nick:
             return
 
-        args = [self.script, nick, target, source, message]
-        logging.debug('Starting: %s %s %s %s %s', *args)
-        args = map(encode, args)
-
-        try:
-            process = subprocess.Popen(args, bufsize=4096,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
-            logging.error('Could not start process: %s', e)
-            return
-
         if nick == target:
             send_to = source
         else:
             send_to = target
 
-        self.dispatchers[process.stdout] = lambda s: self.handle_stdout(s, send_to)
-        self.dispatchers[process.stderr] = self.handle_stderr
-
-        self.connection.execute_delayed(30, self.handle_hanging_process, [process])
+        self.start_process([nick, target, source, message],
+            lambda s: self.handle_stdout(s, send_to))
 
     def on_privmsg(self, conn, event):
         self.on_pubmsg(conn, event)
