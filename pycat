@@ -371,7 +371,7 @@ class PyCatBot(SingleServerIRCBot):
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
-        elif target == nick:
+        elif source == nick:
             return
 
         if nick == target:
