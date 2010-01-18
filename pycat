@@ -359,6 +359,7 @@ class PyCatBot(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
+        message = self.clean_unprintable(message)
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
