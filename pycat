@@ -484,6 +484,11 @@ def main():
             listen = (host, int(port))
         except ValueError:
             parser.error('--listen got an invalid port number')
+    elif options.listen:
+        try:
+            listen = ('', int(options.listen))
+        except ValueError:
+            parser.error('--listen got an invalid port number')
     else:
         listen = None
 
