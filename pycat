@@ -359,7 +359,7 @@ class PyCatBot(SingleServerIRCBot):
             logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
 
     # Regular events
-    def on_pubmsg(self, conn, event):
+    def on_pubmsg(self, conn, event, send_to=None):
         if not self.script:
             return
 
@@ -371,19 +371,16 @@ class PyCatBot(SingleServerIRCBot):
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
-        elif source == nick:
-            return
-
-        if nick == target:
-            send_to = source
-        else:
-            send_to = target
 
         self.start_process([nick, target, source, message],
-            lambda s: self.handle_stdout(s, send_to))
+            lambda s: self.handle_stdout(s, send_to or target))
 
     def on_privmsg(self, conn, event):
-        self.on_pubmsg(conn, event)
+        nick = decode(conn.get_nickname())
+        source = decode(get_nick(event.source()))
+
+        if source != nick:
+            self.on_pubmsg(conn, event, source)
 
     def on_mode(self, conn, event):
         if event.target() != self.channel:
