@@ -308,13 +308,13 @@ class PyCat(SingleServerIRCBot):
             if line:
                 yield line
 
-    def remove_unprintable(self, message):
+    def strip_unprintable(self, message):
+        # Retrived from AnyEvent::IRC::Util on CPAN
         regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
-                   '\x03\d\d?(?:,\d\d?)?',          # IRC colors
-                   '[\x03\x16\x02\x1f\x0f]')        # Other unprintables
-                                              # Copied from AnyEvent::IRC::Util
+                   '\x03\d\d?(?:,\d\d?)?', # IRC colors
+                   '[\x03\x16\x02\x1f\x0f]') # Other unprintables
 
-        return re.sub('(' + '|'.join(regexes) + ')', '', message)
+        return re.sub('|'.join(regexes), '', message)
 
     def parse_targets(self, line):
         if encode(self.channel) not in self.channels:
@@ -377,7 +377,7 @@ class PyCat(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
-        message = self.remove_unprintable(message)
+        message = self.strip_unprintable(message)
 
         if self.match and not re.match(self.match, message.lstrip(nick + ': ')):
             return
