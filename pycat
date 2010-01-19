@@ -394,7 +394,7 @@ class PyCatBot(SingleServerIRCBot):
             self.on_pubmsg(conn, event, source)
 
     def on_mode(self, conn, event):
-        if event.target() != self.channel:
+        if decode(event.target()) != self.channel:
             return
 
         nick = conn.get_nickname()
@@ -402,7 +402,7 @@ class PyCatBot(SingleServerIRCBot):
 
         if ['+', 'o', nick] in modes:
             logging.info('%s was oped, Voiceing and deoping', decode(nick))
-            conn.mode(self.channel, '+v-o %s %s' % (nick, nick))
+            conn.mode(encode(self.channel), '+v-o %s %s' % (nick, nick))
 
     def on_invite(self, conn, event):
         if event.arguments()[0] == self.channel:
