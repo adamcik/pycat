@@ -48,6 +48,17 @@ def encode(string):
 
     return string.encode('utf-8')
 
+def readable(string):
+    new_string = ''
+
+    for s in string:
+        if len(s) == 1 and ord(s) < 32:
+            new_string += r'\x%02X' % ord(s)
+        else:
+            new_string += s
+
+    return new_string
+
 class PyCatBot(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
                  listen_addr=None, script=None):
@@ -99,7 +110,7 @@ class PyCatBot(SingleServerIRCBot):
     def setup_logging(self):
         def debug_logger(conn, event):
             line = decode(event.arguments()[0])
-            logging.debug(repr(line)[2:-1])
+            logging.debug(readable(line))
         self.connection.add_global_handler('all_raw_messages', debug_logger)
 
     def setup_throttling(self):
@@ -161,7 +172,7 @@ class PyCatBot(SingleServerIRCBot):
             self.send_timer += 2
 
             string = self.send_buffer.pop(0)
-            logging.debug(repr(decode(string))[2:-1])
+            logging.debug(readable(decode(string)))
             self.send_raw(string)
 
     def handle_match_update(self):
