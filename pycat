@@ -30,8 +30,6 @@ from optparse import OptionParser
 from ircbot import SingleServerIRCBot, ServerConnectionError, \
         parse_channel_modes, nm_to_n as get_nick
 
-LOG_FORMAT = "[%(asctime)s] %(message)s"
-
 def decode(string):
     if type(string) is unicode or string is None:
         return string
@@ -479,7 +477,7 @@ def main():
         return
 
     logging.basicConfig(level=options.debug or logging.INFO,
-        format=LOG_FORMAT)
+        format="[%(asctime)s] %(message)s")
 
     servers, nickname, channel = args
 
