@@ -158,7 +158,7 @@ class PyCatBot(SingleServerIRCBot):
 
     def handle_timeout(self):
         self.handle_send_buffer()
-        self.handle_match_update()
+        self.handle_check_config()
         self.ircobj.process_timeout()
 
     def handle_send_buffer(self):
@@ -219,7 +219,7 @@ class PyCatBot(SingleServerIRCBot):
         for line in self.process_data(sock, data):
             logging.error(line)
 
-    def handle_match_update(self):
+    def handle_check_config(self):
         if not self.script or self.match_timer > time.time():
             return
 
@@ -239,10 +239,10 @@ class PyCatBot(SingleServerIRCBot):
         if time_since_change < 2:
             time.sleep(2 - time_since_change)
 
-        if self.start_process([], self.handle_match):
+        if self.start_process([], self.handle_config):
             self.script_modified = last_modified
 
-    def handle_match(self, sock):
+    def handle_config(self, sock):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
