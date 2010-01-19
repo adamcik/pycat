@@ -313,7 +313,8 @@ class PyCatBot(SingleServerIRCBot):
     def remove_unprintable(self, message):
         regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
                    '\x03\d\d?(?:,\d\d?)?',          # IRC colors
-                   '[\x03\x16\x02\x1f\x0f]')        # AnyEvent::IRC::Util
+                   '[\x03\x16\x02\x1f\x0f]')        # Other unprintables
+                                              # Copied from AnyEvent::IRC::Util
 
         return re.sub('(' + '|'.join(regexes) + ')', '', message)
 
