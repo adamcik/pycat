@@ -57,7 +57,7 @@ def readable(string):
 
     return new_string
 
-class PyCatBot(SingleServerIRCBot):
+class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
                  listen_addr=None, script=None):
 
@@ -469,7 +469,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.version:
-        print PyCatBot.get_version()
+        print PyCat.get_version()
         return
 
     if len(args) != 3:
@@ -510,7 +510,7 @@ def main():
     else:
         listen = None
 
-    pycat = PyCatBot(server_list, nickname, options.realname or nickname,
+    pycat = PyCat(server_list, nickname, options.realname or nickname,
         channel, listen, options.script)
 
     try:
