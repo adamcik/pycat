@@ -404,7 +404,7 @@ class PyCat(SingleServerIRCBot):
             conn.mode(encode(self.channel), '+v-o %s %s' % (nick, nick))
 
     def on_invite(self, conn, event):
-        if event.arguments()[0] == self.channel:
+        if decode(event.arguments()[0]) == self.channel:
             nick = decode(get_nick(event.source()))
             logging.info('Joining %s due to invite from %s',
                 self.channel, nick)
