@@ -175,29 +175,6 @@ class PyCatBot(SingleServerIRCBot):
             logging.debug(readable(decode(string)))
             self.send_raw(string)
 
-    def handle_match_update(self):
-        if not self.script or self.match_timer > time.time():
-            return
-
-        self.match_timer = time.time() + 60
-
-        try:
-            last_modified = os.stat(self.script).st_mtime
-        except OSError, e:
-            logging.debug('Could not stat %s: %s', self.script, e)
-            return
-
-        if self.script_modified == last_modified:
-            return
-
-        time_since_change = time.time() - last_modified
-
-        if time_since_change < 2:
-            time.sleep(2 - time_since_change)
-
-        if self.start_process([], self.handle_match):
-            self.script_modified = last_modified
-
     # Listener handlers
     def handle_listener(self, sock):
         conn, addr = sock.accept()
@@ -241,6 +218,29 @@ class PyCatBot(SingleServerIRCBot):
 
         for line in self.process_data(sock, data):
             logging.error(line)
+
+    def handle_match_update(self):
+        if not self.script or self.match_timer > time.time():
+            return
+
+        self.match_timer = time.time() + 60
+
+        try:
+            last_modified = os.stat(self.script).st_mtime
+        except OSError, e:
+            logging.debug('Could not stat %s: %s', self.script, e)
+            return
+
+        if self.script_modified == last_modified:
+            return
+
+        time_since_change = time.time() - last_modified
+
+        if time_since_change < 2:
+            time.sleep(2 - time_since_change)
+
+        if self.start_process([], self.handle_match):
+            self.script_modified = last_modified
 
     def handle_match(self, sock):
         data = sock.read(4096)
