@@ -464,6 +464,21 @@ def optparse():
 
     return parser
 
+def parse_host_port(string, default='host'):
+    if ':' in string:
+        host, port = string.split(':')
+    elif default == 'port':
+        host, port = '', string
+    else:
+        host, port = string, ''
+
+    if port and port.isdigit():
+        return (host, int(port))
+    elif port:
+        return (host, -1)
+    else:
+        return (host, '')
+
 def main():
     parser = optparse()
     (options, args) = parser.parse_args()
@@ -485,30 +500,23 @@ def main():
         channel = '#' + channel
 
     server_list = []
+    listen = None
 
     for addr in servers.split(','):
-        if addr and ':' in addr:
-            host, port = addr.split(':', 1)
-            try:
-                server_list.append((host, int(port)))
-            except ValueError:
-                parser.error('server argument got an invalid port number')
-        else:
-            server_list.append((addr, 6667))
+        host, port = parse_host_port(addr)
 
-    if options.listen and ':' in options.listen:
-        host, port = options.listen.split(':', 1)
-        try:
-            listen = (host, int(port))
-        except ValueError:
+        if port == -1:
+            parser.error('server argument got an invalid port number')
+        else:
+            server_list.append((host, port or 6667))
+
+    if options.listen:
+        host, port = parse_host_port(options.listen, 'port')
+
+        if port == -1:
             parser.error('--listen got an invalid port number')
-    elif options.listen:
-        try:
-            listen = ('', int(options.listen))
-        except ValueError:
-            parser.error('--listen got an invalid port number')
-    else:
-        listen = None
+        else:
+            listen = (host or '', port)
 
     pycat = PyCat(server_list, nickname, options.realname or nickname,
         channel, listen, options.script)
