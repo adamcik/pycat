@@ -28,7 +28,7 @@ import time
 from optparse import OptionParser
 
 from ircbot import SingleServerIRCBot, ServerConnectionError, \
-        parse_channel_modes, nm_to_n as get_nick
+        parse_channel_modes, is_channel, nm_to_n as get_nick
 
 def decode(string):
     '''Force strings into unicode string objects'''
@@ -506,7 +506,7 @@ def main():
 
     servers, nickname, channel = args
 
-    if not channel.startswith('#'):
+    if not is_channel(channel):
         channel = '#' + channel
 
     server_list = []
