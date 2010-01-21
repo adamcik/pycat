@@ -31,7 +31,10 @@ from ircbot import SingleServerIRCBot, ServerConnectionError, \
         parse_channel_modes, nm_to_n as get_nick
 
 def decode(string):
-    if type(string) is unicode or string is None:
+
+    '''Force strings into unicode string objects'''
+
+    if isinstance(string, unicode) or string is None:
         return string
 
     try:
@@ -41,12 +44,18 @@ def decode(string):
     return string
 
 def encode(string):
-    if type(string) is not unicode:
-        return string
 
-    return string.encode('utf-8')
+    '''Encode (unicode) strings as utf-8'''
+
+    if isinstance(string, unicode):
+        return string.encode('utf-8')
+
+    return string
 
 def readable(string):
+
+    '''Convert a string to readable format for logging'''
+
     new_string = ''
 
     for s in string:
@@ -56,6 +65,17 @@ def readable(string):
             new_string += s
 
     return new_string
+
+def strip_unprintable(string):
+    '''
+    Removes standard unprintable sequences from the text.
+    Regexes retrived from AnyEvent::IRC::Util on CPAN
+    '''
+    regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
+               '\x03\d\d?(?:,\d\d?)?', # IRC colors
+               '[\x03\x16\x02\x1f\x0f]') # Other unprintables
+
+    return re.sub('|'.join(regexes), '', string)
 
 class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
@@ -308,14 +328,6 @@ class PyCat(SingleServerIRCBot):
             if line:
                 yield line
 
-    def strip_unprintable(self, message):
-        # Retrived from AnyEvent::IRC::Util on CPAN
-        regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
-                   '\x03\d\d?(?:,\d\d?)?', # IRC colors
-                   '[\x03\x16\x02\x1f\x0f]') # Other unprintables
-
-        return re.sub('|'.join(regexes), '', message)
-
     def parse_targets(self, line):
         if encode(self.channel) not in self.channels:
             return [], line
@@ -377,7 +389,7 @@ class PyCat(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
-        message = self.strip_unprintable(message)
+        message = strip_unprintable(message)
 
         if self.match and not re.search(self.match, message.lstrip(nick + ': ')):
             return
