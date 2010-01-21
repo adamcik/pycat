@@ -66,6 +66,17 @@ def readable(string):
 
     return new_string
 
+def strip_unprintable(string):
+    '''
+    Removes standard unprintable sequences from the text.
+    Regexes retrived from AnyEvent::IRC::Util on CPAN
+    '''
+    regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
+               '\x03\d\d?(?:,\d\d?)?', # IRC colors
+               '[\x03\x16\x02\x1f\x0f]') # Other unprintables
+
+    return re.sub('|'.join(regexes), '', string)
+
 class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
                  listen_addr=None, script=None):
@@ -317,14 +328,6 @@ class PyCat(SingleServerIRCBot):
             if line:
                 yield line
 
-    def strip_unprintable(self, message):
-        # Retrived from AnyEvent::IRC::Util on CPAN
-        regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
-                   '\x03\d\d?(?:,\d\d?)?', # IRC colors
-                   '[\x03\x16\x02\x1f\x0f]') # Other unprintables
-
-        return re.sub('|'.join(regexes), '', message)
-
     def parse_targets(self, line):
         if encode(self.channel) not in self.channels:
             return [], line
@@ -386,7 +389,7 @@ class PyCat(SingleServerIRCBot):
         target = decode(event.target())
         source= decode(get_nick(event.source()))
         message = decode(event.arguments()[0])
-        message = self.strip_unprintable(message)
+        message = strip_unprintable(message)
 
         if self.match and not re.search(self.match, message.lstrip(nick + ': ')):
             return
