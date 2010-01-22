@@ -257,7 +257,7 @@ class PyCat(SingleServerIRCBot):
         if time_since_change < 2:
             time.sleep(2 - time_since_change)
 
-        if self.start_process([], self.handle_config):
+        if self.start_process(['--config'], self.handle_config):
             self.script_modified = last_modified
 
     def handle_config(self, sock):
