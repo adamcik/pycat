@@ -28,10 +28,9 @@ import time
 from optparse import OptionParser
 
 from ircbot import SingleServerIRCBot, ServerConnectionError, \
-        parse_channel_modes, nm_to_n as get_nick
+        parse_channel_modes, is_channel, nm_to_n as get_nick
 
 def decode(string):
-
     '''Force strings into unicode string objects'''
 
     if isinstance(string, unicode) or string is None:
@@ -44,7 +43,6 @@ def decode(string):
     return string
 
 def encode(string):
-
     '''Encode (unicode) strings as utf-8'''
 
     if isinstance(string, unicode):
@@ -53,7 +51,6 @@ def encode(string):
     return string
 
 def readable(string):
-
     '''Convert a string to readable format for logging'''
 
     new_string = ''
@@ -71,6 +68,7 @@ def strip_unprintable(string):
     Removes standard unprintable sequences from the text.
     Regexes retrived from AnyEvent::IRC::Util on CPAN
     '''
+
     regexes = ('\x1B\[.*?[\x00-\x1F\x40-\x7E]', # ECMA-48
                '\x03\d\d?(?:,\d\d?)?', # IRC colors
                '[\x03\x16\x02\x1f\x0f]') # Other unprintables
@@ -508,7 +506,7 @@ def main():
 
     servers, nickname, channel = args
 
-    if not channel.startswith('#'):
+    if not is_channel(channel):
         channel = '#' + channel
 
     server_list = []
