@@ -203,7 +203,11 @@ class PyCat(SingleServerIRCBot):
             conn.close()
 
     def handle_reciver(self, sock, peer):
-        data = sock.recv(4096)
+        try:
+            data = sock.recv(4096)
+        except socket.error, e:
+            data = ''
+            logging.error('%s %s', peer, e)
 
         for line in self.process_data(sock, data):
             logging.debug('%s %s', peer, readable(line))
