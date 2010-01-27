@@ -265,6 +265,8 @@ class PyCat(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
+            # XXX use shlex or other suitable scheme to parse this with respect
+            #     to leading and trailing whitespace and "' handling
             match = re.match('^(?P<key>\w+)\s*=\s*(?P<value>.+)', line)
 
             if not match:
