@@ -77,7 +77,7 @@ def strip_unprintable(string):
 
 class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
-                 listen_addr=None, script=None):
+                 listen_addr=None, script=None, deop=True):
 
         SingleServerIRCBot.__init__(self, server_list, nick, real,
                                     reconnection_interval=30)
@@ -85,6 +85,7 @@ class PyCat(SingleServerIRCBot):
         self.channel = decode(channel)
         self.script = decode(script)
         self.listen_addr = listen_addr
+        self.deop = deop
 
         self.match = '^!'
         self.match_timer = 0
@@ -409,6 +410,9 @@ class PyCat(SingleServerIRCBot):
         if decode(event.target()) != self.channel:
             return
 
+        if not self.deop:
+            return
+
         nick = conn.get_nickname()
         modes = parse_channel_modes(' '.join(event.arguments()))
 
@@ -468,6 +472,8 @@ def optparse():
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('-v', '--version',  action='store_true',
         dest='version', default=False, help='display version')
+    parser.add_option('--no-deop', action='store_false',
+        dest='deop', default=True, help='prevent bot from deoping itself')
     parser.add_option('--listen', metavar='[addr]:port',
         help='address to bind listener to')
     parser.add_option('--realname', metavar='name',
@@ -532,7 +538,7 @@ def main():
             listen = (host or '', port)
 
     pycat = PyCat(server_list, nickname, options.realname or nickname,
-        channel, listen, options.script)
+        channel, listen, options.script, options.deop)
 
     try:
         pycat.start()
