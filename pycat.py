@@ -116,13 +116,12 @@ class PyCat(SingleServerIRCBot):
             listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listener.bind(self.listen_addr)
             listener.listen(5)
-
-            logging.info('Listener set up on %s:%s' % self.listen_addr)
-
-            self.dispatchers[listener] = self.handle_listener
-
         except socket.gaierror, e:
             logging.error('Could not setup listener: %s', e)
+            return
+
+        logging.info('Listener set up on %s:%s' % self.listen_addr)
+        self.dispatchers[listener] = self.handle_listener
 
     def setup_logging(self):
         def debug_logger(conn, event):
