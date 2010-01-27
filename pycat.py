@@ -232,7 +232,7 @@ class PyCat(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
-            logging.error(line)
+            logging.error('%s %s', self.script, line)
 
     def handle_check_config(self):
         if not self.script or self.match_timer > time.time():
