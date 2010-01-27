@@ -207,7 +207,7 @@ class PyCat(SingleServerIRCBot):
         data = sock.recv(4096)
 
         for line in self.process_data(sock, data):
-            logging.debug('%s %s', peer, line)
+            logging.debug('%s %s', peer, readable(line))
 
             targets, message = self.parse_targets(line)
 
@@ -226,7 +226,7 @@ class PyCat(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
-            logging.info("%s saying '%s' to %s", self.script, line, target)
+            logging.info("%s saying '%s' to %s", self.script, readable(line), target)
             self.send_message(line, [target])
 
     def handle_stderr(self, sock):
