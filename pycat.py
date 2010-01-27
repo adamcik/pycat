@@ -197,13 +197,12 @@ class PyCat(SingleServerIRCBot):
         logging.debug('%s connected', addr[0])
 
         if self.connection.is_connected():
-            self.dispatchers[conn] = self.handle_reciver
+            self.dispatchers[conn] = lambda s: self.handle_reciver(s, addr[0])
         else:
             logging.warning('%s disconnected as irc is down', addr[0])
             conn.close()
 
-    def handle_reciver(self, sock):
-        peer = sock.getpeername()[0]
+    def handle_reciver(self, sock, peer):
         data = sock.recv(4096)
 
         for line in self.process_data(sock, data):
