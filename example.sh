@@ -1,8 +1,8 @@
 #!/bin/sh
 
-if [ $# -eq 1 -a $1 = "--config" ]; then
-    # Print config if called with --config
-    echo 'match = ^!'
+if [ $# -eq 2 -a $1 = "--config" ]; then
+    # Print config if called with --config nick
+    echo "match = ^$2: "
 else
     if [ $# -eq 4 ]; then
         nick=$1

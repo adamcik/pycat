@@ -75,8 +75,11 @@ path with:
 
 Any data written back to STDOUT will be sent to the same place the message
 originates from. Normally only messages that start with ! will be sent to the
-script. To change this the script should echo `match = regexp` when called
-without arguments. See example.sh for simple hello world script.
+script. When the bot starts or when the script is modified it will be called
+with `--config nick`. The script should reply with `key = value` config
+settings.  Currently only `match = regexp` is supported, this setting modifies
+which messages are sent to the script. See example.sh for simple hello world
+script.
 
 License
 -------
