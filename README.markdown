@@ -76,9 +76,7 @@ path with:
 Any data written back to STDOUT will be sent to the same place the message
 originates from. Normally only messages that start with ! will be sent to the
 script. To change this the script should echo `match = regexp` when called
-without arguments. If the message is prefixed with `nick: ` pycat will remove
-this nick before matching the message .See example.sh for simple hello world
-script.
+without arguments. See example.sh for simple hello world script.
 
 License
 -------

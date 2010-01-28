@@ -402,7 +402,7 @@ class PyCat(SingleServerIRCBot):
         message = decode(event.arguments()[0])
         message = strip_unprintable(message)
 
-        if self.match and not re.search(self.match, message.lstrip(nick + ': ')):
+        if self.match and not re.search(self.match, message):
             return
 
         self.start_process([nick, target, source, message],
