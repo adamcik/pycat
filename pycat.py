@@ -213,6 +213,7 @@ class PyCat(SingleServerIRCBot):
             logging.debug('%s %s', peer, readable(line))
 
             targets, message = self.parse_targets(line)
+            targets = targets or [self.channel]
 
             if not message:
                 continue
@@ -225,12 +226,20 @@ class PyCat(SingleServerIRCBot):
             logging.debug('%s disconnected', peer)
 
     # Process handlers
-    def handle_stdout(self, sock, target):
+    def handle_stdout(self, sock, target, source):
         data = sock.read(4096)
 
+        if target == self.channel:
+            default = self.channel
+        else:
+            default = source
+
         for line in self.process_data(sock, data):
-            logging.info("%s saying '%s' to %s", self.script, readable(line), target)
-            self.send_message(line, [target])
+            targets, message = self.parse_targets(line)
+            targets = targets or [default]
+
+            logging.info("%s saying '%s' to %s", self.script, readable(message), targets)
+            self.send_message(message, targets)
 
     def handle_stderr(self, sock):
         data = sock.read(4096)
@@ -339,6 +348,7 @@ class PyCat(SingleServerIRCBot):
         allowed_targets = map(decode, allowed_targets)
         allowed_targets.append(self.channel)
 
+        targets = []
         parts = line.split(' ')
 
         if '@' in parts[0] or '#' in parts[0]:
@@ -350,8 +360,6 @@ class PyCat(SingleServerIRCBot):
             targets = filter(valid, targets)
             targets = map(strip, targets)
             targets = filter(allowed, targets)
-        else:
-            targets = [self.channel]
 
         return targets, ' '.join(parts)
 
@@ -384,7 +392,7 @@ class PyCat(SingleServerIRCBot):
             logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
 
     # Regular events
-    def on_pubmsg(self, conn, event, send_to=None):
+    def on_pubmsg(self, conn, event):
         if not self.script:
             return
 
@@ -398,14 +406,14 @@ class PyCat(SingleServerIRCBot):
             return
 
         self.start_process([nick, target, source, message],
-            lambda s: self.handle_stdout(s, send_to or target))
+            lambda s: self.handle_stdout(s, target, source))
 
     def on_privmsg(self, conn, event):
         nick = decode(conn.get_nickname())
         source = decode(get_nick(event.source()))
 
         if source != nick:
-            self.on_pubmsg(conn, event, source)
+            self.on_pubmsg(conn, event)
 
     def on_mode(self, conn, event):
         if decode(event.target()) != self.channel:
