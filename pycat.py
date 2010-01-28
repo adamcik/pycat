@@ -389,6 +389,8 @@ class PyCat(SingleServerIRCBot):
         logging.warning('Changing nick to %s', nick)
         conn.nick(encode(nick))
 
+        self.script_modified = 0
+
     def on_join(self, conn, event):
         if get_nick(event.source()) == conn.get_nickname():
             logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
