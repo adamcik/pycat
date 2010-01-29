@@ -471,11 +471,12 @@ class PyCat(SingleServerIRCBot):
 
         try:
             self.connect(server, port, self._nickname, ircname=self._realname)
-            self.dispatchers[self.connection.socket] = self.handle_irc
-            self.irc_socket = self.connection.socket
         except ServerConnectionError:
             logging.error('Failed to connect to %s:%s', server, port)
             return False
+
+        self.dispatchers[self.connection.socket] = self.handle_irc
+        self.irc_socket = self.connection.socket
 
         return True
 
