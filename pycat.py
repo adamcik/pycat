@@ -238,7 +238,8 @@ class PyCat(SingleServerIRCBot):
             targets, message = self.parse_targets(line)
             targets = targets or [default]
 
-            logging.info("%s saying '%s' to %s", self.script, readable(message), targets)
+            logging.info("%s saying '%s' to %s", self.script,
+                readable(message), targets)
             self.send_message(message, targets)
 
     def handle_stderr(self, sock):
