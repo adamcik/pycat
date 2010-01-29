@@ -267,9 +267,7 @@ class PyCat(SingleServerIRCBot):
         if time_since_change < 2:
             time.sleep(2 - time_since_change)
 
-        nick = self.connection.get_nickname()
-
-        if self.start_process(['--config', nick], self.handle_config):
+        if self.start_process(['--config'], self.handle_config):
             self.script_modified = last_modified
 
     def handle_config(self, sock):
@@ -389,8 +387,6 @@ class PyCat(SingleServerIRCBot):
         logging.warning('Changing nick to %s', nick)
         conn.nick(encode(nick))
 
-        self.script_modified = 0
-
     def on_join(self, conn, event):
         if get_nick(event.source()) == conn.get_nickname():
             logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
@@ -406,7 +402,11 @@ class PyCat(SingleServerIRCBot):
         message = decode(event.arguments()[0])
         message = strip_unprintable(message)
 
-        if self.match and not re.search(self.match, message):
+        # Can be replaced with string.Template.safe_substitute, but requires 2.4
+        match = re.sub(r'(?<!\$)\$nick', nick, self.match or '')
+        match = re.sub(r'\$\$nick', '$nick', match)
+
+        if match and not re.search(match, message):
             return
 
         self.start_process([nick, target, source, message],
