@@ -488,11 +488,9 @@ class PyCat(SingleServerIRCBot):
         return True
 
 def optparse():
-    parser = OptionParser(usage=__doc__.strip())
+    parser = OptionParser(usage=__doc__.strip(), version=PyCat.get_version())
     parser.add_option('-d', '--debug',  action='store_const',
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
-    parser.add_option('-v', '--version',  action='store_true',
-        dest='version', default=False, help='display version')
     parser.add_option('--no-deop', action='store_false',
         dest='deop', default=True, help='prevent bot from deoping itself')
     parser.add_option('--listen', metavar='[addr]:port',
@@ -522,10 +520,6 @@ def parse_host_port(string, default='host'):
 def main():
     parser = optparse()
     (options, args) = parser.parse_args()
-
-    if options.version:
-        print PyCat.get_version()
-        return
 
     if len(args) != 3:
         parser.print_help()
