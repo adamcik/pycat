@@ -407,7 +407,13 @@ class PyCat(SingleServerIRCBot):
         match = re.sub(r'(?<!\$)\$nick', nick, self.match or '')
         match = re.sub(r'\$\$nick', '$nick', match)
 
-        if match and not re.search(match, message):
+        try:
+            match = re.compile(match)
+        except re.error, e:
+            logging.error('Problem with match expression: %s', e)
+            return
+
+        if match and not match.search(message):
             return
 
         self.start_process([nick, target, source, message],
