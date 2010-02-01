@@ -2,9 +2,11 @@
 # Copyright (c) 2010 Thomas Kongevold Adamcik
 # Released under MIT license, see COPYING file
 
-'''
-Usage: %prog server[:port][,server[:port]] nickname channel [options]
+USAGE = 'Usage: %prog server[:port][,server[:port]] nickname channel [options]'
 
+VERSION = 'pycat - http://github.com/adamcik/pycat'
+
+EPILOG = '''
 Examples:
   Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
     %prog irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
@@ -25,7 +27,7 @@ import socket
 import subprocess
 import time
 
-from optparse import OptionParser
+from optparse import OptionParser, IndentedHelpFormatter
 
 from ircbot import SingleServerIRCBot, ServerConnectionError, \
         parse_channel_modes, is_channel, nm_to_n as get_nick
@@ -163,7 +165,7 @@ class PyCat(SingleServerIRCBot):
 
     ## CTCP version reply ##
     def get_version():
-        return 'pycat - http://github.com/adamcik/pycat'
+        return VERSION 
     get_version = staticmethod(get_version)
 
     ##  Event loop handlers ##
@@ -487,8 +489,15 @@ class PyCat(SingleServerIRCBot):
 
         return True
 
+class CustomHelpFormater(IndentedHelpFormatter):
+    def format_epilog(self, epilog):
+        if epilog:
+            return self.parser.expand_prog_name(epilog) + '\n'
+        return ''
+
 def optparse():
-    parser = OptionParser(usage=__doc__.strip(), version=PyCat.get_version())
+    parser = OptionParser(usage=USAGE, version=VERSION,
+        epilog=EPILOG, formatter=CustomHelpFormater())
     parser.add_option('-d', '--debug',  action='store_const',
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('--no-deop', action='store_false',
