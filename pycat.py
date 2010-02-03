@@ -484,8 +484,14 @@ class PyCat(SingleServerIRCBot):
             logging.error('Failed to connect to %s:%s', server, port)
             return False
 
-        self.dispatchers[self.connection.socket] = self.handle_irc
         self.irc_socket = self.connection.socket
+        self.dispatchers[self.irc_socket] = self.handle_irc
+
+        # Use TCP keepalive, see 'man tcp' for details about values:
+        self.irc_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+        self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 300)
+        self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 30)
+        self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPCNT, 5)
 
         return True
 
