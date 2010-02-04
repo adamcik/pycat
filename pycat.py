@@ -85,7 +85,7 @@ class PyCat(SingleServerIRCBot):
                                     reconnection_interval=30)
 
         self.channel = decode(channel)
-        self.script = decode(script)
+        self.script = map(decode, script or [])
         self.listen_addr = listen_addr
         self.deop = deop
 
@@ -240,7 +240,7 @@ class PyCat(SingleServerIRCBot):
             targets, message = self.parse_targets(line)
             targets = targets or [default]
 
-            logging.info("%s saying '%s' to %s", self.script,
+            logging.info("%s saying '%s' to %s", self.script[0],
                 readable(message), ', '.join(targets))
             self.send_message(message, targets)
 
@@ -248,7 +248,7 @@ class PyCat(SingleServerIRCBot):
         data = sock.read(4096)
 
         for line in self.process_data(sock, data):
-            logging.error('%s %s', self.script, line)
+            logging.error('%s %s', self.script[0], line)
 
     def handle_check_config(self):
         if not self.script or self.match_timer > time.time():
@@ -257,9 +257,9 @@ class PyCat(SingleServerIRCBot):
         self.match_timer = time.time() + 5
 
         try:
-            last_modified = os.stat(self.script).st_mtime
+            last_modified = os.stat(self.script[0]).st_mtime
         except OSError, e:
-            logging.debug('Could not stat %s: %s', self.script, e)
+            logging.debug('Could not stat %s: %s', self.script[0], e)
             return
 
         if self.script_modified == last_modified:
@@ -282,7 +282,7 @@ class PyCat(SingleServerIRCBot):
             match = re.match('^(?P<key>\w+)\s*=\s*(?P<value>.+)', line)
 
             if not match:
-                logging.error("Invalid reply from %s: '%s'", self.script, line)
+                logging.error("Invalid reply from %s: '%s'", self.script[0], line)
                 continue
 
             key, value = match.groups()
@@ -296,12 +296,12 @@ class PyCat(SingleServerIRCBot):
     def handle_hanging_process(self, process):
         if process.poll() is None:
             logging.error('%s pid:%s taking to long, sending SIGTERM',
-                self.script, process.pid)
+                self.script[0], process.pid)
             os.kill(process.pid, signal.SIGTERM)
 
     ## Event loop helper methods ##
     def start_process(self, args, handler):
-        args.insert(0, self.script)
+        args = list(self.script + args)
 
         logging.debug('Starting: %s', ' '.join(args))
         args = map(encode, args)
@@ -514,6 +514,8 @@ def optparse():
         help='realname to provide to IRC server')
     parser.add_option('--script', metavar='path',
         help='script to send messages to')
+    parser.add_option('--args', metavar='arg', default=[],
+        help='extra arugments to send script', action='append')
 
     return parser
 
@@ -568,7 +570,7 @@ def main():
             listen = (host or '', port)
 
     pycat = PyCat(server_list, nickname, options.realname or nickname,
-        channel, listen, options.script, options.deop)
+        channel, listen, [options.script]+options.args, options.deop)
 
     try:
         pycat.start()
