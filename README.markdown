@@ -18,26 +18,27 @@ pyCAT requires Python and irclib.py (http://python-irclib.sourceforge.net/).
 Usage
 -----
 
-    Usage: pycat server[:port][,server[:port]] nickname channel [options]
+    Usage: pycat.py server[:port][,server[:port]] nickname channel [options]
     
-    Examples:
-      Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
-        pycat irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
-      Use multiple fallbacks on IRCnet, nick cat, channel pycat
-        pycat irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
-      Connect to localhost, listen on port 12345 on all interfaces:
-        pycat localhost cat '#pycat' --listen=12345
-      Connect to irc.freenode.net, listen on port 8000 on a specific interface:
-        pycat irc.freenode.net cat '#pycat' --listen=example.com:8000
-
     Options:
+      --version             show program's version number and exit
       -h, --help            show this help message and exit
       -d, --debug           set log-level to debug
-      -v, --version         display version
       --no-deop             prevent bot from deoping itself
       --listen=[addr]:port  address to bind listener to
       --realname=name       realname to provide to IRC server
       --script=path         script to send messages to
+      --args=arg            extra arugments to send script
+    
+    Examples:
+      Connect to irc.efnet.net, with nick cat, name 'Majo nes', script /foo/bar:
+        pycat.py irc.efnet.net cat efnet --realname='Majo Nes' --script=/foo/bar
+      Use multiple fallbacks on IRCnet, nick cat, channel pycat
+        pycat.py irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
+      Connect to localhost, listen on port 12345 on all interfaces:
+        pycat.py localhost cat '#pycat' --listen=12345
+      Connect to irc.freenode.net, listen on port 8000 on a specific interface:
+        pycat.py irc.freenode.net cat '#pycat' --listen=example.com:8000
 
 Running
 -------
@@ -77,11 +78,10 @@ path with:
 Any data written back to STDOUT will be sent to the same place the message
 originates from. Normally only messages that start with ! will be sent to the
 script. When the bot starts or when the script is modified it will be called
-with `--config`. The script should reply with `key = value` config settings.
-Currently only `match = regexp` is supported, this setting modifies which
-messages are sent to the script. For regexp matching `$nick` will be replaced
-with the current nick before running the check, use `$$nick` if you want the
-end expansion to be `$nick`. See example.sh for simple hello world script.
+with `--config nick`. The script should reply with `key = value` config
+settings.  Currently only `match = regexp` is supported, this setting modifies
+which messages are sent to the script. See example.sh for simple hello world
+script.
 
 License
 -------
