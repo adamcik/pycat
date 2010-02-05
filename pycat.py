@@ -489,7 +489,7 @@ class PyCat(SingleServerIRCBot):
 
         # Use TCP keepalive, see 'man tcp' for details about values:
         self.irc_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
-        self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 300)
+        self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 150)
         self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 30)
         self.irc_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPCNT, 5)
 
