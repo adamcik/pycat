@@ -569,8 +569,13 @@ def main():
         else:
             listen = (host or '', port)
 
+    if options.script:
+        script = [options.script] + options.args
+    else:
+        script = []
+
     pycat = PyCat(server_list, nickname, options.realname or nickname,
-        channel, listen, [options.script]+options.args, options.deop)
+        channel, listen, script, options.deop)
 
     try:
         pycat.start()
