@@ -165,7 +165,7 @@ class PyCat(SingleServerIRCBot):
 
     ## CTCP version reply ##
     def get_version():
-        return VERSION 
+        return VERSION
     get_version = staticmethod(get_version)
 
     ##  Event loop handlers ##
