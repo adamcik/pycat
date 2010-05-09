@@ -439,7 +439,7 @@ class PyCat(SingleServerIRCBot):
         modes = parse_channel_modes(' '.join(event.arguments()))
 
         if ['+', 'o', nick] in modes:
-            logging.info('%s was oped, Voiceing and deoping', decode(nick))
+            logging.info('%s was oped, Voicing and deoping', decode(nick))
             conn.mode(encode(self.channel), '+v-o %s %s' % (nick, nick))
 
     def on_invite(self, conn, event):
