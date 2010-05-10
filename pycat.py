@@ -97,6 +97,8 @@ class PyCat(SingleServerIRCBot):
         self.dispatchers = {}
         self.irc_socket = None
 
+        self.target_nick = nick
+
         self.send_timer = 0
         self.send_buffer = []
         self.recv_buffers = {}
@@ -387,9 +389,18 @@ class PyCat(SingleServerIRCBot):
         conn.join(encode(self.channel))
 
     def on_nicknameinuse(self, conn, event):
-        nick = decode(conn.get_nickname() + '_')
-        logging.warning('Changing nick to %s', nick)
-        conn.nick(encode(nick))
+        target = self.target_nick
+        tried = decode(event.arguments()[0])
+        alternate = tried + '_'
+
+        if alternate != decode(conn.get_nickname()):
+            logging.warning('Changing nick to %s', alternate)
+            conn.nick(encode(alternate))
+
+        if tried == target:
+            logging.warning('Trying to take back %s in 5 minutes', target)
+            take_back_inuse_nick = lambda: conn.nick(encode(target))
+            self.connection.execute_delayed(60*5, take_back_inuse_nick)
 
     def on_join(self, conn, event):
         nick = conn.get_nickname()
