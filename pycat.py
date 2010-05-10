@@ -79,7 +79,7 @@ def strip_unprintable(string):
 
 class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
-                 listen_addr=None, script=None, deop=True):
+                 listen_addr=None, script=None, deop=True, opfirst=True):
 
         SingleServerIRCBot.__init__(self, server_list, nick, real,
                                     reconnection_interval=30)
@@ -88,6 +88,7 @@ class PyCat(SingleServerIRCBot):
         self.script = map(decode, script or [])
         self.listen_addr = listen_addr
         self.deop = deop
+        self.opfirst = opfirst
 
         self.match = '^!'
         self.match_timer = 0
@@ -391,8 +392,19 @@ class PyCat(SingleServerIRCBot):
         conn.nick(encode(nick))
 
     def on_join(self, conn, event):
-        if get_nick(event.source()) == conn.get_nickname():
-            logging.info('%s joined %s', decode(conn.get_nickname()), self.channel)
+        nick = conn.get_nickname()
+        joiner = get_nick(event.source())
+
+        if joiner == nick:
+            logging.info('%s joined %s', decode(nick), self.channel)
+        elif len(self.channels[encode(self.channel)].users()) == 1:
+            if not self.opfirst:
+                return
+            elif self.deop:
+                mode = '+o-o+v %s %s %s' % (joiner, nick, nick)
+            else:
+                mode = '+o %s' % joiner
+            conn.mode(encode(self.channel), mode)
 
     # Regular events
     def on_pubmsg(self, conn, event):
@@ -508,6 +520,8 @@ def optparse():
         dest='debug', const=logging.DEBUG, help='set log-level to debug')
     parser.add_option('--no-deop', action='store_false',
         dest='deop', default=True, help='prevent bot from deoping itself')
+    parser.add_option('--op-first', action='store_false', dest='opfirst',
+        default=True, help='op first user to join channel if bot is alone')
     parser.add_option('--listen', metavar='[addr]:port',
         help='address to bind listener to')
     parser.add_option('--realname', metavar='name',
@@ -575,7 +589,7 @@ def main():
         script = []
 
     pycat = PyCat(server_list, nickname, options.realname or nickname,
-        channel, listen, script, options.deop)
+        channel, listen, script, options.deop, options.opfirst)
 
     try:
         pycat.start()

@@ -25,6 +25,7 @@ Usage
       -h, --help            show this help message and exit
       -d, --debug           set log-level to debug
       --no-deop             prevent bot from deoping itself
+      --op-first            op first user to join channel if bot is alone
       --listen=[addr]:port  address to bind listener to
       --realname=name       realname to provide to IRC server
       --script=path         script to send messages to
