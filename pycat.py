@@ -433,7 +433,7 @@ class PyCat(SingleServerIRCBot):
         match = re.sub(r'\$\$nick', '$nick', match)
 
         try:
-            match = re.compile(match)
+            match = re.compile(match, re.UNICODE)
         except re.error, e:
             logging.error('Problem with match expression: %s', e)
             return
