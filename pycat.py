@@ -14,6 +14,8 @@ Examples:
     %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
   Connect to localhost, listen on port 12345 on all interfaces:
     %prog localhost cat '#pycat' --listen=12345
+  Connect to irc.private.mynet with a password, nick cat, channel pycat
+    %prog secretpass/irc.private.mynet cat '#pycat'
   Connect to irc.freenode.net, listen on port 8000 on a specific interface:
     %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
 '''
@@ -498,11 +500,13 @@ class PyCat(SingleServerIRCBot):
     def _connect(self):
         server = self.server_list[0][0]
         port = self.server_list[0][1]
+        password = self.server_list[0][2]
 
         logging.info('Trying to connect to %s:%s', server, port)
 
         try:
-            self.connect(server, port, self._nickname, ircname=self._realname)
+            self.connect(server, port, self._nickname, password,
+                         ircname=self._realname)
         except ServerConnectionError:
             logging.error('Failed to connect to %s:%s', server, port)
             return False
@@ -552,12 +556,16 @@ def parse_host_port(string, default='host'):
     else:
         host, port = string, ''
 
+    password = None
+    if '/' in host:
+        password, host = string.split('/', 1)
+
     if port and port.isdigit():
         return (host, int(port))
     elif port:
-        return (host, -1)
+        return (host, -1, password)
     else:
-        return (host, '')
+        return (host, '', password)
 
 def main():
     parser = optparse()
@@ -579,15 +587,15 @@ def main():
     listen = None
 
     for addr in servers.split(','):
-        host, port = parse_host_port(addr)
+        host, port, password = parse_host_port(addr)
 
         if port == -1:
             parser.error('server argument got an invalid port number')
         else:
-            server_list.append((host, port or 6667))
+            server_list.append((host, port or 6667, password))
 
     if options.listen:
-        host, port = parse_host_port(options.listen, 'port')
+        host, port, password = parse_host_port(options.listen, 'port')
 
         if port == -1:
             parser.error('--listen got an invalid port number')
