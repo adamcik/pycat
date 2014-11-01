@@ -550,7 +550,7 @@ def optparse():
 
 def parse_host_port(string, default='host'):
     if ':' in string:
-        host, port = string.split(':')
+        host, port = string.rsplit(':', 1)
     elif default == 'port':
         host, port = '', string
     else:
@@ -558,7 +558,7 @@ def parse_host_port(string, default='host'):
 
     password = None
     if '/' in host:
-        password, host = host.split('/', 1)
+        password, host = host.rsplit('/', 1)
 
     if port and port.isdigit():
         return (host, int(port), password)
