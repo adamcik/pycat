@@ -558,10 +558,10 @@ def parse_host_port(string, default='host'):
 
     password = None
     if '/' in host:
-        password, host = string.split('/', 1)
+        password, host = host.split('/', 1)
 
     if port and port.isdigit():
-        return (host, int(port))
+        return (host, int(port), password)
     elif port:
         return (host, -1, password)
     else:
