@@ -14,8 +14,8 @@ Examples:
     %prog irc.ifi.uio.no,irc.hitos.no,irc.pvv.org:6668 cat '#pycat'
   Connect to localhost, listen on port 12345 on all interfaces:
     %prog localhost cat '#pycat' --listen=12345
-  Connect to irc.private.mynet with a password, nick cat, channel pycat
-    %prog secretpass/irc.private.mynet cat '#pycat'
+  Connect to irc.mynet.prv with port and password, nick cat, channel pycat
+    %prog irc.mynet.prv:7777/secretpw cat '#pycat'
   Connect to irc.freenode.net, listen on port 8000 on a specific interface:
     %prog irc.freenode.net cat '#pycat' --listen=example.com:8000
 '''
@@ -78,6 +78,15 @@ def strip_unprintable(string):
                '[\x03\x16\x02\x1f\x0f]') # Other unprintables
 
     return re.sub('|'.join(regexes), '', string)
+
+def dequote(string):
+    '''
+    Removes matching single or double quotes.
+    '''
+
+    if (string[0] == string[-1]) and string.startswith(("'", '"')):
+        return string[1:-1]
+    return string
 
 class PyCat(SingleServerIRCBot):
     def __init__(self, server_list, nick, real, channel,
@@ -548,17 +557,17 @@ def optparse():
 
     return parser
 
-def parse_host_port(string, default='host'):
+def parse_host_port_password(string, default='host'):
+    password = None
+    if '/' in string:
+        string, password = string.split('/', 1)
+        password = dequote(password)
     if ':' in string:
-        host, port = string.rsplit(':', 1)
+        host, port = string.split(':', 1)
     elif default == 'port':
         host, port = '', string
     else:
         host, port = string, ''
-
-    password = None
-    if '/' in host:
-        password, host = host.rsplit('/', 1)
 
     if port and port.isdigit():
         return (host, int(port), password)
@@ -586,8 +595,9 @@ def main():
     server_list = []
     listen = None
 
-    for addr in servers.split(','):
-        host, port, password = parse_host_port(addr)
+    # regex from http://stackoverflow.com/a/16710842
+    for addr in re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', servers):
+        host, port, password = parse_host_port_password(addr)
 
         if port == -1:
             parser.error('server argument got an invalid port number')
@@ -595,7 +605,7 @@ def main():
             server_list.append((host, port or 6667, password))
 
     if options.listen:
-        host, port, password = parse_host_port(options.listen, 'port')
+        host, port, password = parse_host_port_password(options.listen, 'port')
 
         if port == -1:
             parser.error('--listen got an invalid port number')
